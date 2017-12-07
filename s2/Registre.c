@@ -10,9 +10,18 @@ struct Registre {
     char ip[16];       // Ip associada a l'usuari.
 
     struct Registre (*fun) (char* _username, int _port, char* _ip);
+    struct Registre (*create) (char* _username);
     void (*show) (struct Registre * reg);
     int (*compare) (struct Registre * r1, struct Registre * r2);
 };
+
+struct Registre create (char* _username){
+    struct Registre r;
+    strcpy(r.username, _username);
+    r.port = -1;
+    strcpy(r.ip, "");
+    return r;
+}
 
 /**
  * Implementació del constructor amb paràmetres.

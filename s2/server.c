@@ -9,31 +9,57 @@
 #include "Registre.c"
 #include "DataSet.c"
 
-
 /**
- * ds ha d'estar buit i inicialitzat.
+ * ds ha d'estar buit i inicialitzat, domini ha d'estar buit i inicialitzat.
  * Llegeix tots els noms d'usuari del fitxer esmentat i els carrega al dataset en format de tuples.
  */
-void llegirUsuaris(struct DataSet *ds){
+int llegirUsuaris(struct DataSet *ds, char * domini){
+
+	//open and get the file handle
+	FILE* fh;
+	char * filename = "usuaris.txt";
+	fh = fopen(filename , "r");
+
+	//check if file exists
+	if (fh == NULL){
+	    printf("file does not exists %s", filename);
+	    return 0;
+	}
 
 
-	
+	const size_t line_size = 300;
+	char* line = malloc(line_size);
+
+	if(fgets(line, line_size, fh) != NULL){
+		strncpy(domini, line, strlen(line) - 1);
+		return -1;
+	}
+
+	while (fgets(line, line_size, fh) != NULL)  {
+		char tmp[line_size] = "";
+		strncpy(tmp, line, strlen(line) - 1);
+		struct Registre usuari = create(tmp);
+		insertRegistre(ds, &usuari);
+	}
+	free(line);    // Alliberar memòria reservada.
+	return 1;
 }
 
 
 int main(int argc, char* argv[]) {
 
-	struct DataSet d;
+	struct DataSet d; init(&d);
+	llegirUsuaris(&d);
+	showDataSet(&d);
 
-	init(&d);
-	struct Registre r = createRegistre("marc", 2000, "8918912");
-	struct Registre r2 = createRegistre("gil", 2000, "891892");
-	insertRegistre(&d, &r);
-	insertRegistre(&d, &r2);
-	showDataSet(&d);
-	printf("%i\n",getPosicio(&d, &r));
-	deleteRegistre(&d, &r2);
-	showDataSet(&d);
+	// struct Registre r = createRegistre("marc", 2000, "8918912");
+	// struct Registre r2 = createRegistre("gil", 2000, "891892");
+	// insertRegistre(&d, &r);
+	// insertRegistre(&d, &r2);
+	// showDataSet(&d);
+	// printf("%i\n",getPosicio(&d, &r));
+	// deleteRegistre(&d, &r2);
+	// showDataSet(&d);
 
 
 	/*
