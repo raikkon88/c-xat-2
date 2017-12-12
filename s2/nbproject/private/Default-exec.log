@@ -1,8 +1,0 @@
-called: /usr/bin/gcc
-	/Volumes/DATA/UDG/3r/XARXES/xat-2/s2
-	/usr/bin/gcc
-	-c
-	server.c
-	-o
-	server.o
-
