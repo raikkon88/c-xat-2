@@ -4,7 +4,7 @@
 /* Fitxer nodelumi.c que implementa la interfície aplicació-administrador */
 /* d'un node de LUMI, sobre la capa d'aplicació de LUMI (fent crides a la */
 /* interfície de la capa LUMI -fitxers lumi.c i lumi.h-).                 */
-/* Autors: X, Y                                                           */
+/* Autors: Feng Lin, Marc Sànchez                                         */
 /*                                                                        */
 /**************************************************************************/
 

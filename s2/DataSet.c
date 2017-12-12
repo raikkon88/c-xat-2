@@ -9,6 +9,9 @@ void init(struct DataSet * ds){
         struct Registre r = createRegistre("", -1, "");
         ds->data[i] = r;
     }
+
+    bzero(ds->domini, MAX_LENGHT_DOMINI);
+
     ds->nClients = 0;
 }
 
@@ -22,9 +25,14 @@ int getPosicio(struct DataSet * ds, struct Registre *r){
 }
 
 void showDataSet(struct DataSet * ds){
+    printf("%s", "#  ");
+    printf("%s\n", ds->domini);
+    printf("%s\n", "#####################################################################");
+
     int i;
     for(i = 0; i < ds->nClients; i++){
         show(&ds->data[i]);
+        printf("%s\n","------------------------------------------------------------------");
     }
 }
 

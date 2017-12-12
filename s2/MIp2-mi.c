@@ -3,7 +3,7 @@
 /* P2 - MI amb sockets TCP/IP - Part II                                   */
 /* Fitxer mi.c que implementa la capa d'aplicació de MI, sobre la capa de */
 /* transport TCP (fent crides a la interfície de la capa TCP -sockets-).  */
-/* Autors: X, Y                                                           */
+/* Autors: Feng Lin, Marc Sànchez                                         */
 /*                                                                        */
 /**************************************************************************/
 
@@ -43,7 +43,7 @@ void MostraError(const char *Text);
 /* creat si tot va bé.                                                    */
 int MI_IniciaEscPetiRemConv(int portTCPloc)
 {
-	
+
 }
 
 /* Escolta indefinidament fins que arriba una petició local de conversa   */
@@ -54,7 +54,7 @@ int MI_IniciaEscPetiRemConv(int portTCPloc)
 /* arriba una petició remota.                                             */
 int MI_HaArribatPetiConv(int SckEscMI)
 {
-	
+
 }
 
 /* Crea una conversa iniciada per una petició local que arriba a través   */
@@ -78,7 +78,7 @@ int MI_HaArribatPetiConv(int SckEscMI)
 /* MI creat si tot va bé.                                                 */
 int MI_DemanaConv(const char *IPrem, int portTCPrem, char *IPloc, int *portTCPloc, const char *NicLoc, char *NicRem)
 {
-	
+
 }
 
 /* Crea una conversa iniciada per una petició remota que arriba a través  */
@@ -101,7 +101,7 @@ int MI_DemanaConv(const char *IPrem, int portTCPrem, char *IPloc, int *portTCPlo
 /* de MI creat si tot va bé.                                              */
 int MI_AcceptaConv(int SckEscMI, char *IPrem, int *portTCPrem, char *IPloc, int *portTCPloc, const char *NicLoc, char *NicRem)
 {
-	
+
 }
 
 /* Escolta indefinidament fins que arriba una línia local de conversa a   */
@@ -112,7 +112,7 @@ int MI_AcceptaConv(int SckEscMI, char *IPrem, int *portTCPrem, char *IPloc, int 
 /* arriba una línia remota.                                               */
 int MI_HaArribatLinia(int SckConvMI)
 {
-	
+
 }
 
 /* Envia a través del socket de conversa de MI d’identificador            */
@@ -125,7 +125,7 @@ int MI_HaArribatLinia(int SckConvMI)
 /* enviada (sense el ‘\0’) si tot va bé (0 <= n <= 299).                  */
 int MI_EnviaLinia(int SckConvMI, const char *Linia)
 {
-	
+
 }
 
 /* Rep a través del socket de conversa de MI d’identificador “SckConvMI”  */
@@ -140,7 +140,7 @@ int MI_EnviaLinia(int SckConvMI, const char *Linia)
 /* (0 <= n <= 299).                                                       */
 int MI_RepLinia(int SckConvMI, char *Linia)
 {
-	
+
 }
 
 /* Acaba la conversa associada al socket de conversa de MI                */
@@ -148,7 +148,7 @@ int MI_RepLinia(int SckConvMI, char *Linia)
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé.    */
 int MI_AcabaConv(int SckConvMI)
 {
-	
+
 }
 
 /* Acaba l’escolta de peticions remotes de conversa que arriben a través  */
@@ -157,7 +157,7 @@ int MI_AcabaConv(int SckConvMI)
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé.    */
 int MI_AcabaEscPetiRemConv(int SckEscMI)
 {
-	
+
 }
 
 
@@ -173,7 +173,7 @@ int MI_AcabaEscPetiRemConv(int SckEscMI)
 /* va bé.                                                                 */
 int TCP_CreaSockClient(const char *IPloc, int portTCPloc)
 {
-	
+
 }
 
 /* Crea un socket TCP “servidor” (o en estat d’escolta – listen –) a      */
@@ -186,7 +186,7 @@ int TCP_CreaSockClient(const char *IPloc, int portTCPloc)
 /* va bé.                                                                 */
 int TCP_CreaSockServidor(const char *IPloc, int portTCPloc)
 {
-	
+
 }
 
 /* El socket TCP “client” d’identificador “Sck” es connecta al socket     */
@@ -200,7 +200,7 @@ int TCP_CreaSockServidor(const char *IPloc, int portTCPloc)
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé.    */
 int TCP_DemanaConnexio(int Sck, const char *IPrem, int portTCPrem)
 {
-	
+
 }
 
 /* El socket TCP “servidor” d’identificador “Sck” accepta fer una         */
@@ -217,7 +217,7 @@ int TCP_DemanaConnexio(int Sck, const char *IPrem, int portTCPrem)
 /* si tot va bé.                                                          */
 int TCP_AcceptaConnexio(int Sck, char *IPrem, int *portTCPrem)
 {
-	
+
 }
 
 /* Envia a través del socket TCP “connectat” d’identificador “Sck” la     */
@@ -228,7 +228,7 @@ int TCP_AcceptaConnexio(int Sck, char *IPrem, int *portTCPrem)
 /* Retorna -1 si hi ha error; el nombre de bytes enviats si tot va bé.    */
 int TCP_Envia(int Sck, const char *SeqBytes, int LongSeqBytes)
 {
-	
+
 }
 
 /* Rep a través del socket TCP “connectat” d’identificador “Sck” una      */
@@ -241,7 +241,7 @@ int TCP_Envia(int Sck, const char *SeqBytes, int LongSeqBytes)
 /* bytes rebuts si tot va bé.                                             */
 int TCP_Rep(int Sck, char *SeqBytes, int LongSeqBytes)
 {
-	
+
 }
 
 /* S’allibera (s’esborra) el socket TCP d’identificador “Sck”; si “Sck”   */
@@ -249,7 +249,7 @@ int TCP_Rep(int Sck, char *SeqBytes, int LongSeqBytes)
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé.    */
 int TCP_TancaSock(int Sck)
 {
-	
+
 }
 
 /* Donat el socket TCP d’identificador “Sck”, troba l’adreça d’aquest     */
@@ -260,7 +260,7 @@ int TCP_TancaSock(int Sck)
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé.    */
 int TCP_TrobaAdrSockLoc(int Sck, char *IPloc, int *portTCPloc)
 {
-	
+
 }
 
 /* Donat el socket TCP “connectat” d’identificador “Sck”, troba l’adreça  */
@@ -271,7 +271,7 @@ int TCP_TrobaAdrSockLoc(int Sck, char *IPloc, int *portTCPloc)
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé.    */
 int TCP_TrobaAdrSockRem(int Sck, char *IPrem, int *portTCPrem)
 {
-	
+
 }
 
 /* Examina simultàniament i sense límit de temps (una espera indefinida)  */
@@ -283,7 +283,7 @@ int TCP_TrobaAdrSockRem(int Sck, char *IPrem, int *portTCPrem)
 /* sockets, retorna l’identificador d’aquest socket.                      */
 int HaArribatAlgunaCosa(const int *LlistaSck, int LongLlistaSck)
 {
-	
+
 }
 
 /* Escriu un missatge de text al flux d’error estàndard stderr, format    */

@@ -4,7 +4,7 @@
 /* Fitxer lumi.c que implementa la capa d'aplicació de LUMI, sobre la     */
 /* de transport UDP (fent crides a la interfície de la capa UDP           */
 /* -sockets-).                                                            */
-/* Autors: X, Y                                                           */
+/* Autors: Feng Lin, Marc Sànchez                                         */
 /*                                                                        */
 /**************************************************************************/
 
@@ -47,7 +47,7 @@ int Log_TancaFitx(int FitxLog);
 /* Descripció dels valors de retorn de la funció...                       */
 int LUMI_FuncioExterna(arg1, arg2...)
 {
-	
+
 }
 
 
@@ -63,7 +63,7 @@ int LUMI_FuncioExterna(arg1, arg2...)
 /* va bé.                                                                 */
 int UDP_CreaSock(const char *IPloc, int portUDPloc);
 {
-	
+
 }
 
 /* Envia a través del socket UDP d’identificador “Sck” la seqüència de    */
@@ -76,7 +76,7 @@ int UDP_CreaSock(const char *IPloc, int portUDPloc);
 /* Retorna -1 si hi ha error; el nombre de bytes enviats si tot va bé.    */
 int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes, int LongSeqBytes);
 {
-	
+
 }
 
 /* Rep a través del socket UDP d’identificador “Sck” una seqüència de     */
@@ -91,14 +91,14 @@ int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes,
 /* Retorna -1 si hi ha error; el nombre de bytes rebuts si tot va bé.     */
 int UDP_RepDe(int Sck, char *IPrem, int *portUDPrem, char *SeqBytes, int LongSeqBytes);
 {
-	
+
 }
 
 /* S’allibera (s’esborra) el socket UDP d’identificador “Sck”.            */
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé.    */
 int UDP_TancaSock(int Sck)
 {
-	
+
 }
 
 /* Donat el socket UDP d’identificador “Sck”, troba l’adreça d’aquest     */
@@ -109,7 +109,7 @@ int UDP_TancaSock(int Sck)
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé.    */
 int UDP_TrobaAdrSockLoc(int Sck, char *IPloc, int *portUDPloc)
 {
-	
+
 }
 
 /* El socket UDP d’identificador “Sck” es connecta al socket UDP d’@IP    */
@@ -123,7 +123,7 @@ int UDP_TrobaAdrSockLoc(int Sck, char *IPloc, int *portUDPloc)
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé.    */
 int UDP_DemanaConnexio(int Sck, const char *IPrem, int portUDPrem)
 {
-	
+
 }
 
 /* Envia a través del socket UDP “connectat” d’identificador “Sck” la     */
@@ -134,7 +134,7 @@ int UDP_DemanaConnexio(int Sck, const char *IPrem, int portUDPrem)
 /* Retorna -1 si hi ha error; el nombre de bytes enviats si tot va bé.    */
 int UDP_Envia(int Sck, const char *SeqBytes, int LongSeqBytes)
 {
-	
+
 }
 
 /* Rep a través del socket UDP “connectat” d’identificador “Sck” una      */
@@ -145,7 +145,7 @@ int UDP_Envia(int Sck, const char *SeqBytes, int LongSeqBytes)
 /* Retorna -1 si hi ha error; el nombre de bytes rebuts si tot va bé.     */
 int UDP_Rep(int Sck, char *SeqBytes, int LongSeqBytes)
 {
-	
+
 }
 
 /* Donat el socket UDP “connectat” d’identificador “Sck”, troba l’adreça  */
@@ -156,7 +156,7 @@ int UDP_Rep(int Sck, char *SeqBytes, int LongSeqBytes)
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé.    */
 int UDP_TrobaAdrSockRem(int Sck, char *IPrem, int *portUDPrem)
 {
-	
+
 }
 
 /* Examina simultàniament durant "Temps" (en [ms] els sockets (poden ser  */
@@ -170,7 +170,7 @@ int UDP_TrobaAdrSockRem(int Sck, char *IPrem, int *portUDPrem)
 /* l’identificador d’aquest socket.                                       */
 int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temps)
 {
-	
+
 }
 
 /* Donat el nom DNS "NomDNS" obté la corresponent @IP i l'escriu a "IP*"  */
@@ -181,7 +181,7 @@ int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temp
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé     */
 int ResolDNSaIP(const char *NomDNS, char *IP)
 {
-	
+
 }
 
 /* Crea un fitxer de "log" de nom "NomFitxLog".                           */
@@ -191,7 +191,7 @@ int ResolDNSaIP(const char *NomDNS, char *IP)
 /* bé.                                                                    */
 int Log_CreaFitx(const char *NomFitxLog)
 {
-	
+
 }
 
 /* Escriu al fitxer de "log" d'identificador "FitxLog" el missatge de     */
@@ -202,14 +202,14 @@ int Log_CreaFitx(const char *NomFitxLog)
 /* "log" (sense el '\0') si tot va bé                                     */
 int Log_Escriu(int FitxLog, const char *MissLog)
 {
-	
+
 }
 
 /* Tanca el fitxer de "log" d'identificador "FitxLog".                    */
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé.    */
 int Log_TancaFitx(int FitxLog)
 {
-	
+
 }
 
 

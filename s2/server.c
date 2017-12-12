@@ -9,30 +9,32 @@
 #include "Registre.c"
 #include "DataSet.c"
 
+#define DB_FILE "usuaris.txt"
+
 /**
  * ds ha d'estar buit i inicialitzat, domini ha d'estar buit i inicialitzat.
  * Llegeix tots els noms d'usuari del fitxer esmentat i els carrega al dataset en format de tuples.
+ * Si quelcom ha anat malament retorna un valor menor a 0
+ * Si tot ha anat bé retorna 0.
  */
-int llegirUsuaris(struct DataSet *ds, char * domini){
+int LUMI_llegirUsuaris(struct DataSet *ds){
 
 	//open and get the file handle
 	FILE* fh;
-	char * filename = "usuaris.txt";
+	char * filename = DB_FILE;
 	fh = fopen(filename , "r");
 
 	//check if file exists
 	if (fh == NULL){
-	    printf("file does not exists %s", filename);
+	    printf("file does not exists %s\n", filename);
 	    return 0;
 	}
-
 
 	const size_t line_size = 300;
 	char* line = malloc(line_size);
 
 	if(fgets(line, line_size, fh) != NULL){
-		strncpy(domini, line, strlen(line) - 1);
-		return -1;
+		strncpy(ds->domini, line, strlen(line) - 1);
 	}
 
 	while (fgets(line, line_size, fh) != NULL)  {
@@ -42,15 +44,45 @@ int llegirUsuaris(struct DataSet *ds, char * domini){
 		insertRegistre(ds, &usuari);
 	}
 	free(line);    // Alliberar memòria reservada.
-	return 1;
+	return 0;
 }
 
+/**
+ * Escriu el dataset lumi a un fitxer de text.
+ * Aquest fitxer l'encapçala el nom del domini com a primera línia i tot seguit tots els usuaris que
+ * formen part d'aquest dataset.
+ * Si quelcom ha nat malament retorna un valor inferior a 0,
+ * Si tot ha anat bé retorna 0.
+ */
+int LUMI_escriureUsuaris(struct DataSet *ds){
+	FILE * fh;
+	char * filename = DB_FILE;
+	fh = fopen(filename, "w+");
+
+	if(fh == NULL){
+		printf("file %s does not exists, Something has been wrong...\n", filename);
+		return -1;
+	}
+
+	fputs(ds->domini, fh);
+	fputs("\n", fh);
+	int i;
+	for(i = 0; i < ds->nClients; i++){
+		fputs(ds->data[i].username, fh);
+		fputs("\n", fh);
+	}
+
+	fclose(fh);
+	return 0;
+}
 
 int main(int argc, char* argv[]) {
 
 	struct DataSet d; init(&d);
-	llegirUsuaris(&d);
+	int lectura = llegirUsuaris(&d);
 	showDataSet(&d);
+	int escriptura = escriureUsuaris(&d);
+	printf("%i\n", escriptura);
 
 	// struct Registre r = createRegistre("marc", 2000, "8918912");
 	// struct Registre r2 = createRegistre("gil", 2000, "891892");
