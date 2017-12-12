@@ -4,7 +4,7 @@
 /* Fitxer lumi.c que implementa la capa d'aplicació de LUMI, sobre la     */
 /* de transport UDP (fent crides a la interfície de la capa UDP           */
 /* -sockets-).                                                            */
-/* Autors: Feng Lin, Marc Sànchez                                         */
+/* Autors: X, Y                                                           */
 /*                                                                        */
 /**************************************************************************/
 
@@ -45,10 +45,10 @@ int Log_TancaFitx(int FitxLog);
 /* Descripció dels arguments de la funció, què son, tipus, si es passen   */
 /* per valor o per referència (la funció els omple)...                    */
 /* Descripció dels valors de retorn de la funció...                       */
-int LUMI_FuncioExterna(arg1, arg2...)
-{
-
-}
+// int LUMI_FuncioExterna(arg1, arg2...)
+// {
+//
+// }
 
 
 /* Definicio de funcions INTERNES, és a dir, d'aquelles que es faran      */
@@ -63,6 +63,32 @@ int LUMI_FuncioExterna(arg1, arg2...)
 /* va bé.                                                                 */
 int UDP_CreaSock(const char *IPloc, int portUDPloc);
 {
+	int sock;
+	/* Es crea el socket UDP sock del client (el socket "local"), que de moment no té       */
+	/* adreça (@IP i #port UDP) assignada.     												*/
+	if((sock=socket(AF_INET,SOCK_DGRAM,0))==-1)
+	{
+		perror("Error en socket");
+		return (-1);
+	}
+
+	struct sockaddr_in adrloc;
+
+	adrloc.sin_family=AF_INET;
+	adrloc.sin_port=htons(portUDPloc);
+	adrloc.sin_addr.s_addr=inet_addr(IPloc);    /* o bé: ...s_addr = INADDR_ANY */
+	for(i=0;i<8;i++){
+		adrloc.sin_zero[i]='\0';
+	}
+
+	if((bind(sock,(struct sockaddr*)&adrloc,sizeof(adrloc)))==-1)
+	{
+		perror("Error en bind");
+		close(sock);
+		return (-1);
+	}
+
+	return sock;
 
 }
 
@@ -76,6 +102,25 @@ int UDP_CreaSock(const char *IPloc, int portUDPloc);
 /* Retorna -1 si hi ha error; el nombre de bytes enviats si tot va bé.    */
 int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes, int LongSeqBytes);
 {
+	struct sockaddr_in adrrem;
+	adrrem.sin_family=AF_INET;
+	adrrem.sin_port=htons(portUDPrem);
+	adrrem.sin_addr.s_addr= inet_addr(IPrem);
+	for(i=0;i<8;i++){adrrem.sin_zero[i]='\0';}
+
+	//enviar el missatge
+	int bescrit;
+	if((bescrit=sendto(Sck,SeqBytes,LongSeqBytes,0,(struct sockaddr*)&adrrem,sizeof(adrrem)))==-1)
+	{
+		perror("Error en sendto");
+		close(Sck);
+		exit(-1);
+	}
+
+
+
+
+	return bescrit;
 
 }
 
@@ -92,12 +137,29 @@ int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes,
 int UDP_RepDe(int Sck, char *IPrem, int *portUDPrem, char *SeqBytes, int LongSeqBytes);
 {
 
+	struct sockaddr_in adrrem;
+	int ladrrem=sizeof(adrrem); // longitud del adrrem
+
+	//rebre el missatge
+	int bllegit;
+	if((bllegit=recvfrom(Sck,SeqBytes,LongSeqBytes,0,(struct sockaddr*)&adrrem,&ladrrem))==-1)
+	{
+		perror("Error recvfrom\n");
+		close(Sck);
+		exit(-1);
+	}
+
+	//actualitzar IPrem i portUDPrem
+	strcpy(IPrem,inet_ntoa(adrrem.sin_addr));
+	*portUDPrem=ntohs(adrrem.sin_port);
+
 }
 
 /* S’allibera (s’esborra) el socket UDP d’identificador “Sck”.            */
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé.    */
 int UDP_TancaSock(int Sck)
 {
+	return close(Sck);
 
 }
 
@@ -109,6 +171,19 @@ int UDP_TancaSock(int Sck)
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé.    */
 int UDP_TrobaAdrSockLoc(int Sck, char *IPloc, int *portUDPloc)
 {
+	struct sockaddr_in adrloc;
+	int long_adrloc=sizeof(adrloc);
+	if (getsockname(Sck, (struct sockaddr *)&adrloc, &long_adrloc) == -1)
+	{
+		close(Sck);
+		return -1;
+	}
+	strcpy(IPloc, inet_ntoa(adrloc.sin_addr));
+    *portUDPloc = (int)(intptr_t)ntohs(adrloc.sin_port);
+
+	return 0;
+
+
 
 }
 
@@ -157,6 +232,18 @@ int UDP_Rep(int Sck, char *SeqBytes, int LongSeqBytes)
 int UDP_TrobaAdrSockRem(int Sck, char *IPrem, int *portUDPrem)
 {
 
+	struct sockaddr_in adrrem;
+	int long_adrrem=sizeof(adrrem);
+	if (getsockname(Sck, (struct sockaddr *)&adrrem, &long_adrrem) == -1)
+	{
+		close(Sck);
+		return -1;
+	}
+	strcpy(IPrem, inet_ntoa(adrrem.sin_addr));
+    *portUDPrem = (int)(intptr_t)ntohs(adrrem.sin_port);
+
+	return 0;
+
 }
 
 /* Examina simultàniament durant "Temps" (en [ms] els sockets (poden ser  */
@@ -191,7 +278,7 @@ int ResolDNSaIP(const char *NomDNS, char *IP)
 /* bé.                                                                    */
 int Log_CreaFitx(const char *NomFitxLog)
 {
-
+	return open(NomFitxLog,O_WRONLY|O_CREAT|O_TRUNC,0700);
 }
 
 /* Escriu al fitxer de "log" d'identificador "FitxLog" el missatge de     */
@@ -202,15 +289,15 @@ int Log_CreaFitx(const char *NomFitxLog)
 /* "log" (sense el '\0') si tot va bé                                     */
 int Log_Escriu(int FitxLog, const char *MissLog)
 {
-
+	return write(FitxLog,MissLog,strlen(MissLog));
 }
 
 /* Tanca el fitxer de "log" d'identificador "FitxLog".                    */
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé.    */
 int Log_TancaFitx(int FitxLog)
 {
-
+	return close(FitxLog);
 }
 
 
-/* Si ho creieu convenient, feu altres funcions...                        */
+/* Si ho creieu convenient, feu altres funcions...
