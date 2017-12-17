@@ -79,9 +79,9 @@ int LUMI_escriureUsuaris(struct DataSet *ds){
 int main(int argc, char* argv[]) {
 
 	struct DataSet d; init(&d);
-	int lectura = llegirUsuaris(&d);
+	int lectura = LUMI_llegirUsuaris(&d);
 	showDataSet(&d);
-	int escriptura = escriureUsuaris(&d);
+	int escriptura = LUMI_escriureUsuaris(&d);
 	printf("%i\n", escriptura);
 
 	// struct Registre r = createRegistre("marc", 2000, "8918912");

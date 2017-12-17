@@ -1,13 +1,6 @@
-CC = gcc
-CFLAGS = -Wall -g
-default: server
+CFLAGS=-I headers -I src
+OBJ=Registre.o Dataset.o MIp2-nodelumi.o
+SRC=Registre.c Dataset.c MIp2-nodelumi.c
 
-server.o: server.c
-	gcc -c server.c -o server.o
-
-server: server.o
-	gcc server.o -o server
-
-clean:
-	-rm -f server.o
-	-rm -f server
+server: $(OBJ)
+gcc $(OBJ) -o server

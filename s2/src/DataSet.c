@@ -1,4 +1,6 @@
+#include "Registre.c"
 #include "DataSet.h"
+
 
 /**
  * Implementacions per l'estructura DataSet

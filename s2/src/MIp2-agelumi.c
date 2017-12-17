@@ -1,9 +1,10 @@
 /**************************************************************************/
 /*                                                                        */
 /* P2 - MI amb sockets TCP/IP - Part II                                   */
-/* Fitxer nodelumi.c que implementa la interfície aplicació-administrador */
-/* d'un node de LUMI, sobre la capa d'aplicació de LUMI (fent crides a la */
-/* interfície de la capa LUMI -fitxers lumi.c i lumi.h-).                 */
+/* Fitxer agelumi.c que implementa la interfície aplicació-usuari d'un    */
+/* agent d'usuari de LUMI sol, no integrat a l'aplicació de MI, sobre la  */
+/* capa d'aplicació de LUMI (fent crides a la interfície de la capa LUMI  */
+/* -fitxers lumi.c i lumi.h- ).                                           */
 /* Autors: Feng Lin, Marc Sànchez                                         */
 /*                                                                        */
 /**************************************************************************/
@@ -17,6 +18,8 @@
 
 int main(int argc,char *argv[])
 {
+    
+
  /* Declaració de variables, p.e., int n;                                 */
 
  /* Expressions, estructures de control, crides a funcions, etc.          */
