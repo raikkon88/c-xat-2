@@ -7,7 +7,7 @@
 /*                                                                        */
 /**************************************************************************/
 
-
+#define MAX_MESSAGE_LENGHT  200
 
 /* Declaració de funcions externes de lumi.c, és a dir, d'aquelles que es */
 /* faran servir en un altre fitxer extern, p.e., MIp2-p2p.c,              */
@@ -20,4 +20,6 @@
 
 int LUMI_llegirUsuaris(struct DataSet *ds, char * filename);
 int LUMI_escriureUsuaris(struct DataSet *ds, char * filename);
-int LUMI_inicialitza_servidor(struct DataSet *ds, char * filename);
+int LUMI_inicialitza_servidor(struct DataSet * d, char * filename, char * ip, int port);
+int LUMI_start(int socket, struct DataSet * d);
+int LUMI_processa(int sck, struct DataSet * d);

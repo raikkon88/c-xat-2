@@ -1,7 +1,5 @@
 #include "DataSet.h"
 
-
-
 /**
  * Implementacions per l'estructura DataSet
  */

@@ -153,10 +153,10 @@ int main(int argc, char* argv[]) {
 
 
 	/* Via sock es rep una línia del socket del client (el socket "remot").                 */
-	/*
+
 	ladrrem=sizeof(adrrem);
-	*/ // longitud del adrrem
-	/*
+	 // longitud del adrrem
+
 	while(bllegit > 0 && strcmp(buff, "$") != 0){
 		memset(buff,0,strlen(buff));
 
@@ -169,11 +169,11 @@ int main(int argc, char* argv[]) {
 		if(strcmp(buff, "$") != 0) printf("%s\n", buff);
 
 	}
-	*/
+
 
     /* Es tanca el socket sock.                                                             */
-	/*
+
 	close(sock);
-	*/
+	
     return 0;
 }

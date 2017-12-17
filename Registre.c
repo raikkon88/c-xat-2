@@ -5,6 +5,7 @@ struct Registre create (char* _username){
     strcpy(r.username, _username);
     r.port = -1;
     strcpy(r.ip, "");
+    r.online = 0;
     return r;
 }
 
@@ -20,12 +21,33 @@ struct Registre  createRegistre(char* _username, int _port, char* _ip){
 }
 
 /**
+ * Return true if the register is online, else return false.
+ * True is expressed as a number 1 and false as number 0.
+ */
+int isOnline(struct Registre * r){
+    return r->online;
+}
+
+/**
+ * Assigne the online value.
+ * If value is different thant 0 or 1 the assigned value is 0.
+ * else value is assigned to online parameter.
+ */
+void setOnLine(struct Registre * r, int value){
+    if(value != 0 && value != 1){
+        r->online = 0;
+    }
+    r->online = 1;
+}
+
+/**
  * Mosta la tupla registre per pantalla.
  */
 void show(struct Registre * reg){
-    printf("%s\n", reg->username);
-    printf("%i\n", reg->port);
-    printf("%s\n", reg->ip);
+    printf("Username  : %s\n", reg->username);
+    printf("Port      : %i\n", reg->port);
+    printf("IP        : %s\n", reg->ip);
+    printf("Connected : %i\n", reg->online);
 }
 
 /**

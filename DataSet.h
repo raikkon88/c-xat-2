@@ -2,6 +2,7 @@
  * Definició de la taula de clients.
  */
 
+
 #define MAX_CLIENTS         200 /** Màxim de clients permesos */
 #define MAX_LENGHT_DOMINI   200 /** Màxim de caràcters per el domini */
 

@@ -9,6 +9,8 @@
 /**************************************************************************/
 
 #include "MIp2-lumi.h"
+#include <sys/stat.h>
+#include <fcntl.h>
 
 /* Inclusió de llibreries, p.e. #include <sys/types.h> o #include "meu.h" */
 /*  (si les funcions externes es cridessin entre elles, faria falta fer   */
@@ -47,10 +49,7 @@ int Log_TancaFitx(int FitxLog);
 /* Descripció dels arguments de la funció, què son, tipus, si es passen   */
 /* per valor o per referència (la funció els omple)...                    */
 /* Descripció dels valors de retorn de la funció...                       */
-// int LUMI_FuncioExterna(arg1, arg2...)
-// {
-//
-// }
+
 
 
 /**
@@ -81,7 +80,8 @@ int LUMI_llegirUsuaris(struct DataSet *ds, char * filename){
 	}
 
 	while (fgets(line, line_size, fh) != NULL)  {
-		char tmp[line_size] = "";
+		char tmp[line_size];
+		bzero(tmp, line_size);
 		strncpy(tmp, line, strlen(line) - 1);
 		struct Registre usuari = create(tmp);
 		insertRegistre(ds, &usuari);
@@ -123,11 +123,82 @@ int LUMI_escriureUsuaris(struct DataSet *ds, char * filename){
 /**
  * Funció que prepara el servidor per al processament de peticions dels clents.
  * Reb un Dataset buit i un nom de fitxer i emplena el dataset amb les dades del
- * fitxer.
+ * fitxer. Genera un socket d'escolta UDP sobre la ip i port passats per paràmetre.
+ * RESPOSTA
+ * --------------------------------------
+ * ERROR -> -1
+ * SUCCESS -> identificador del socket UDP connectat.
  */
-int LUMI_inicialitza_servidor(struct DataSet * d, char * filename){
-	int res = LUMI_llegirUsuaris(&d, &filename);
+int LUMI_inicialitza_servidor(struct DataSet * d, char * filename, char * ip, int port){
+    init(d);
+	int lectura = LUMI_llegirUsuaris(d, filename);
+	if(lectura < 0)
+		return -1;
+
+	// Inicialitzem el socket d'escolta del servidor.
+	return UDP_CreaSock(ip, port);
+}
+
+/**
+ * Procediment de resolució de peticions del servidor. Serveix totes les peticions que li arrivin per els diferents sockets
+ * Ja siguin sockets com el teclat o bé sockets UDP. El servidor no ha de servir peticions TCP.
+ * socket està montat i obert, per tant es pot rebre per ell.
+ * RESULTAT
+ * ----------------------------
+ * ERROR -> valor < 0
+ * SUCCESS -> 0 (El prorgama ha finalitzat)
+ */
+int LUMI_start(int socket, struct DataSet * d){
+
+	while(1){
+		fd_set conjunt;
+		FD_ZERO(&conjunt);
+		FD_SET(socket,&conjunt);
+		FD_SET(0,&conjunt);
+
+		/* examinem lectura del teclat i del socket scon amb la llista conjunt */
+		if(select(socket+1, &conjunt, NULL, NULL, NULL) == -1)
+		{
+			perror("Error en select");
+			return (-1);
+		}
+
+		if(FD_ISSET(socket, &conjunt)){
+			// Ha arribat quelcom per udp
+			int res = LUMI_processa(socket, d);
+			if(res < 0){
+				return -1;
+			}
+		}
+		else{
+			// Ha arribat de teclat
+			break;
+		}
+	}
 	return 0;
+}
+
+/**
+ * Reb el missatge que ha arrivat per el socket sck, el processa i realitza l'acció que correspon
+ * en funció del missatge que ha arrivat.
+ * RESULTAT
+ * -----------------------
+ * ERROR -> -1
+ * SUCCESS -> return 0
+ */
+int LUMI_processa(int sck, struct DataSet * d){
+	char ipRem[15] = "";
+	int  portRem = 0;
+	char missatge[MAX_MESSAGE_LENGHT];
+	bzero(missatge, MAX_MESSAGE_LENGHT);
+	int res = UDP_RepDe(sck, ipRem, &portRem, missatge, MAX_MESSAGE_LENGHT);
+
+	if(res < 0){
+		return -1;
+	}
+	else{
+		printf("%s\n", missatge);
+	}
 }
 
 
@@ -141,7 +212,7 @@ int LUMI_inicialitza_servidor(struct DataSet * d, char * filename){
 /* '\0') d'una longitud màxima de 16 chars (incloent '\0')                */
 /* Retorna -1 si hi ha error; l’identificador del socket creat si tot     */
 /* va bé.                                                                 */
-int UDP_CreaSock(const char *IPloc, int portUDPloc);
+int UDP_CreaSock(const char *IPloc, int portUDPloc)
 {
 	int sock;
 	/* Es crea el socket UDP sock del client (el socket "local"), que de moment no té       */
@@ -157,6 +228,7 @@ int UDP_CreaSock(const char *IPloc, int portUDPloc);
 	adrloc.sin_family=AF_INET;
 	adrloc.sin_port=htons(portUDPloc);
 	adrloc.sin_addr.s_addr=inet_addr(IPloc);    /* o bé: ...s_addr = INADDR_ANY */
+	int i;
 	for(i=0;i<8;i++){
 		adrloc.sin_zero[i]='\0';
 	}
@@ -180,12 +252,13 @@ int UDP_CreaSock(const char *IPloc, int portUDPloc);
 /* "SeqBytes" és un vector de chars qualsevol (recordeu que en C, un      */
 /* char és un enter de 8 bits) d'una longitud >= LongSeqBytes bytes       */
 /* Retorna -1 si hi ha error; el nombre de bytes enviats si tot va bé.    */
-int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes, int LongSeqBytes);
+int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes, int LongSeqBytes)
 {
 	struct sockaddr_in adrrem;
 	adrrem.sin_family=AF_INET;
 	adrrem.sin_port=htons(portUDPrem);
 	adrrem.sin_addr.s_addr= inet_addr(IPrem);
+	int i;
 	for(i=0;i<8;i++){adrrem.sin_zero[i]='\0';}
 
 	//enviar el missatge
@@ -211,7 +284,7 @@ int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes,
 /* "SeqBytes*" és un vector de chars qualsevol (recordeu que en C, un     */
 /* char és un enter de 8 bits) d'una longitud <= LongSeqBytes bytes       */
 /* Retorna -1 si hi ha error; el nombre de bytes rebuts si tot va bé.     */
-int UDP_RepDe(int Sck, char *IPrem, int *portUDPrem, char *SeqBytes, int LongSeqBytes);
+int UDP_RepDe(int Sck, char *IPrem, int *portUDPrem, char *SeqBytes, int LongSeqBytes)
 {
 
 	struct sockaddr_in adrrem;
@@ -259,9 +332,6 @@ int UDP_TrobaAdrSockLoc(int Sck, char *IPloc, int *portUDPloc)
     *portUDPloc = (int)(intptr_t)ntohs(adrloc.sin_port);
 
 	return 0;
-
-
-
 }
 
 /* El socket UDP d’identificador “Sck” es connecta al socket UDP d’@IP    */
@@ -377,4 +447,4 @@ int Log_TancaFitx(int FitxLog)
 }
 
 
-/* Si ho creieu convenient, feu altres funcions...
+/* Si ho creieu convenient, feu altres funcions...*/
