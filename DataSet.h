@@ -26,4 +26,8 @@ struct DataSet {
     // Retorna la posició de la taula on es troba el registre r
     // o bé un registre n que té el mateix nom que r, o un registre n que té la mateixa ip i port que r.
     int (*getPosicio) (struct DataSet * ds, struct Registre * r);
+
+    int (*llegirUsuaris) (struct DataSet * ds, char * filename);
+
+    int (*escriureUsuaris) (struct DataSet * ds, char * filename);
 };

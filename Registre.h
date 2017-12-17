@@ -10,7 +10,7 @@ struct Registre {
     char ip[16];       // Ip associada a l'usuari.
     int  online;       // Estipula si el registre, és a dir l'usuari està online.
 
-    struct Registre (*fun) (char* _username, int _port, char* _ip);
+    struct Registre (*fun) (char* _username, int _port, char* _ip, int _online);
     struct Registre (*create) (char* _username);
     void (*show) (struct Registre * reg);
     int (*compare) (struct Registre * r1, struct Registre * r2);
