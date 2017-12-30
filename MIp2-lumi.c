@@ -211,7 +211,14 @@ int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
     printf("dns to : %s\n", dnsTo);
 
     // TODO : S'ha d'arreglar i pensar be el tema de si es mi o no i si s'ha d'enviar a un client o aun altre servidor.
+    if(strcmp(dnsFrom, dnsTo) == 0){
+        // Vol dir que el missatge no ha de sortir del servidor cap a un altre servidor.
+    }
+    else{
+        // Pot ser que el servidor sigui el to o el from.
+    }
 
+ // REVISAR:::
     if(strcmp(dnsTo, d->domini) == 0){
         // Està dins del domini del servidor
         printf("%s\n", "Està dins del servidor");
@@ -245,7 +252,7 @@ int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
         else{
             // El registre no existeix, contesta el servidor
             printf("No s'ha trobat el registre\n");
-            LUMI_RespostaLocalitzacio(sck, &nickFrom, &dnsFrom, 2, 1);
+            LUMI_RespostaLocalitzacio(sck, &nickFrom, &dnsFrom, 2);
         }
     }
     else{
