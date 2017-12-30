@@ -139,7 +139,7 @@ int LUMI_processa(int sck, struct DataSet * d){
             // int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes, int LongSeqBytes
             char resposta[MIDA_RESPOSTA_REGISTRE] = "";
             LUMI_crea_resposta_registre(resposta, "R", resultatRegistre);
-            printf("%s\n", resposta);
+            printf("Resposta : %s\n", resposta);
 			int resultatResposta = UDP_EnviaA(sck, ipRem, portRem, resposta, MIDA_RESPOSTA_REGISTRE);
             if(resultatResposta < 0){
                 // Escriure Log
@@ -151,7 +151,7 @@ int LUMI_processa(int sck, struct DataSet * d){
 			int resultatRegistre = LUMI_registre(missatge, longitud, d, ipRem, portRem, 0);
             char resposta[MIDA_RESPOSTA_REGISTRE]="";
             LUMI_crea_resposta_registre(resposta, "D", resultatRegistre);
-            printf("%s\n", resposta);
+            printf("Resposta : %s\n", resposta);
 			int resultatResposta = UDP_EnviaA(sck, ipRem, portRem, resposta, MIDA_RESPOSTA_REGISTRE);
             if(resultatResposta < 0){
                 // Escriure Log
@@ -243,6 +243,8 @@ int UDP_CreaSock(const char *IPloc, int portUDPloc)
 /* Retorna -1 si hi ha error; el nombre de bytes enviats si tot va bé.    */
 int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes, int LongSeqBytes)
 {
+    //printf("S'esta enviant %s\n", SeqBytes);
+
 	struct sockaddr_in adrrem;
 	adrrem.sin_family=AF_INET;
 	adrrem.sin_port=htons(portUDPrem);
@@ -287,6 +289,8 @@ int UDP_RepDe(int Sck, char *IPrem, int *portUDPrem, char *SeqBytes, int LongSeq
 		close(Sck);
 		return -1;
 	}
+
+    printf("S'ha emplenat : %s\n", SeqBytes);
 
 	//actualitzar IPrem i portUDPrem
 	strcpy(IPrem,inet_ntoa(adrrem.sin_addr));
@@ -483,7 +487,7 @@ int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc)
 int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc){
 
 	//fem la peticio de registre
-	char SeqBytes[204];
+	char SeqBytes[TOTAL_LENGHT_MESSAGE];
 
 	strcpy(SeqBytes, "R");
 	strcat(SeqBytes, usuari);
@@ -495,9 +499,12 @@ int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int por
 		return -1;
 	}
 
-    char * ipRemitent;
-	int n = UDP_RepDe(Sck, ipRemitent, &portUDPloc, SeqBytes, 204);
-	SeqBytes[n] = '\0';
+    //printf("S'han enviat %i bytes\n", Byteenviats);
+    bzero(SeqBytes, MAX_MESSAGE_LENGHT);
+    // Rebre resposta del servidor :
+    char * ipRemitent="";
+	int n = UDP_RepDe(Sck, ipRemitent, &portUDPloc, SeqBytes, TOTAL_LENGHT_MESSAGE);
+	//SeqBytes[n] = '\0';
 	if( n ==-1) printf(" error de rebre el paquet AR \n");
 	if(strcmp(SeqBytes,"AR0") == 0){
 		return 1;
@@ -510,7 +517,7 @@ int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int por
 int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc){
 
 
-	char SeqBytes[204];
+	char SeqBytes[TOTAL_LENGHT_MESSAGE];
 
 	strcpy(SeqBytes, "D");
 	strcat(SeqBytes, usuari);
@@ -527,7 +534,7 @@ int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int 
 	char IPnode[16];
 	int portNode;
 
-	int n = UDP_RepDe(Sck, IPnode, &portNode, SeqBytes, 204);
+	int n = UDP_RepDe(Sck, IPnode, &portNode, SeqBytes, TOTAL_LENGHT_MESSAGE);
 	SeqBytes[n] = '\0';
 	if( n ==-1) printf(" error de rebre el paquet AR \n");
 	if(strcmp(SeqBytes,"AD0") == 0){ // s'ha desresgistrat correctament
@@ -540,7 +547,8 @@ int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int 
 
 int LUMI_PeticioLocalitzacio(int Sck, const char *preguntador,const char *preguntat,const char *IPloc, int portUDPloc ,char *IPTCP, int *portTCP){
 
-	char SeqBytes[204];
+	char SeqBytes[TOTAL_LENGHT_MESSAGE];
+
 
 	strcpy(SeqBytes, "L");
 	strcat(SeqBytes, preguntador);

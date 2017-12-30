@@ -22,7 +22,8 @@
 //#include "Registre.h"
 //#include "DataSet.h"
 
-#define MAX_MESSAGE_LENGHT  200
+#define MAX_MESSAGE_LENGHT   200
+#define TOTAL_LENGHT_MESSAGE 204
 
 /**
  * Struct de registre de la taula que desa els usuaris.

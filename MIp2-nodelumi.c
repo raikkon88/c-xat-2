@@ -39,6 +39,4 @@ int main(int argc,char *argv[])
         printf("ERROR -> %s\n","Error en el processament de peticions.");
     }
 
-    showDataSet(&d);
-
 }
