@@ -123,7 +123,7 @@ int LUMI_start(int socket, struct DataSet * d){
  * SUCCESS -> return 0
  */
 int LUMI_processa(int sck, struct DataSet * d){
-	char ipRem[15] = "";
+	char ipRem[MAX_IP_LENGTH] = "";
 	int  portRem = 0;
 	char missatge[MAX_MESSAGE_LENGHT];
 	bzero(missatge, MAX_MESSAGE_LENGHT);
@@ -173,8 +173,8 @@ int LUMI_processa(int sck, struct DataSet * d){
  */
 int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, int portRem, int online){
 	// S'extreuen els camps del missatge rebut.
-	char * username = strncpy(rebut, rebut + 1, longitud - 1);
-	username[longitud-1]='\0';
+	char * username = strncpy(rebut, rebut + 1, longitud);
+	username[longitud]='\0';
 	printf("%s\n",username);
 
 	// Genero un registre i el marquem com online amb la informació que s'ha rebut.
@@ -289,12 +289,13 @@ int UDP_RepDe(int Sck, char *IPrem, int *portUDPrem, char *SeqBytes, int LongSeq
 		close(Sck);
 		return -1;
 	}
-
-    printf("S'ha emplenat : %s\n", SeqBytes);
-
 	//actualitzar IPrem i portUDPrem
+    printf("%s\n",inet_ntoa(adrrem.sin_addr));
+    bzero(IPrem, MAX_IP_LENGTH);
 	strcpy(IPrem,inet_ntoa(adrrem.sin_addr));
+    printf("actualitzar IPrem\n");
 	*portUDPrem=ntohs(adrrem.sin_port);
+    printf("actualitzar port\n");
 	return bllegit - 1; // Se li resta el '\0'
 }
 
@@ -502,15 +503,20 @@ int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int por
     //printf("S'han enviat %i bytes\n", Byteenviats);
     bzero(SeqBytes, MAX_MESSAGE_LENGHT);
     // Rebre resposta del servidor :
-    char * ipRemitent="";
+    char ipRemitent[MAX_IP_LENGTH];
+    bzero(ipRemitent, MAX_IP_LENGTH);
 	int n = UDP_RepDe(Sck, ipRemitent, &portUDPloc, SeqBytes, TOTAL_LENGHT_MESSAGE);
 	//SeqBytes[n] = '\0';
 	if( n ==-1) printf(" error de rebre el paquet AR \n");
 	if(strcmp(SeqBytes,"AR0") == 0){
 		return 1;
 	}
-
-	return -1;
+    else if(strcmp(SeqBytes, "AR1") == 0){
+        return -2;
+    }
+    else{
+        return -1;
+    }
 }
 
 
@@ -531,7 +537,7 @@ int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int 
 
 
 
-	char IPnode[16];
+	char IPnode[MAX_IP_LENGTH];
 	int portNode;
 
 	int n = UDP_RepDe(Sck, IPnode, &portNode, SeqBytes, TOTAL_LENGHT_MESSAGE);
@@ -694,7 +700,8 @@ int updateRegistre(struct DataSet * ds, struct Registre *r){
     }
     else{
         strcpy(ds->data[posRegistre].ip, r->ip);
-        ds->data[posRegistre].port = ds->data[posRegistre].port;
+        ds->data[posRegistre].port = r->port;
+        ds->data[posRegistre].online = r->online;
     }
 }
 

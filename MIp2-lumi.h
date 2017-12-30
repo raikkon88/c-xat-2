@@ -24,6 +24,7 @@
 
 #define MAX_MESSAGE_LENGHT   200
 #define TOTAL_LENGHT_MESSAGE 204
+#define MAX_IP_LENGTH        16
 
 /**
  * Struct de registre de la taula que desa els usuaris.
@@ -34,7 +35,7 @@ struct Registre {
     // Camps que ha de tenir l'struct de registre
     char username[50]; // Nom d'usuari
     int  port;         // port UDP associat al nom d'usuari
-    char ip[16];       // Ip associada a l'usuari.
+    char ip[MAX_IP_LENGTH];       // Ip associada a l'usuari.
     int  online;       // Estipula si el registre, és a dir l'usuari està online.
 };
 

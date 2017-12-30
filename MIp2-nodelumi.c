@@ -35,7 +35,7 @@ int main(int argc,char *argv[])
     printf("%s\n", "Initialization success ... ");
     int socket = resultatAccio;
     resultatAccio = LUMI_start(socket, &d);
-    if(resultatAccio < 0){
+    if( resultatAccio < 0){
         printf("ERROR -> %s\n","Error en el processament de peticions.");
     }
 
