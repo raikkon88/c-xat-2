@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# Fitxer que agilitza la descàrrega del codi del repositori i genera els 
+# compilats a partir dels fitxers nodelumi.c i lumi.c per el servidor 
+# i agelumi.c i lumi.c per el client. 
+
+# Aquest fitxer es descarrega els canvis que hi ha al repositori, 
+# genera el servidor i el client utilitzant l'instrucció gcc
+# Exemple de funcionament : 
+# El primer cop s'ha d'executar la comanda : 
+#     git config credential.helper store
+
+# Aquesta instrucció li diu al git que es guardi el password. 
+# Un cop feta la instrucció es pot realitzar la instrucció : 
+# 	./compile
+# El primer cop demanarà el password i després ja no caldrà tornar-lo a posar. 
+
 git pull
 gcc -o client MIp2-agelumi.c MIp2-lumi.c
 gcc -o server MIp2-nodelumi.c MIp2-lumi.c
