@@ -23,4 +23,10 @@ int LUMI_start(int socket, struct DataSet * d);
 int LUMI_processa(int sck, struct DataSet * d);
 int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, int portRem, int online);
 int LUMI_acceptaRegistre();
+
+
 void LUMI_crea_resposta_registre(char * resposta, char * tipusResposta, int valorResposta);
+int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc);
+int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc);
+int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc);
+int LUMI_PeticioLocalitzacio(int Sck, const char *preguntador,const char *preguntat,const char *IPloc, int portUDPloc ,char *IPTCP, int *portTCP);

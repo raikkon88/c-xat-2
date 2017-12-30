@@ -393,7 +393,37 @@ int UDP_TrobaAdrSockRem(int Sck, char *IPrem, int *portUDPrem)
 /* l’identificador d’aquest socket.                                       */
 int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temps)
 {
+    fd_set conjunt;
+	FD_ZERO(&conjunt);
+	int i;
+	int descmax = 0;
+	for(i = 0; i < LongLlistaSck; i++){
+		int fd = LlistaSck[i];
+		FD_SET(fd,&conjunt);
+		if(fd > descmax){
+			descmax = fd;
+		}
+	}
 
+	struct timeval timeout;
+	timeout.tv_sec = 0;
+  	timeout.tv_usec = Temps*1000;
+
+	int selection;
+	if(Temps == -1){
+		selection = select(maxSck+1, &conjunt, 0, 0, 0);
+	}else{
+		selection = select(maxSck+1, &conjunt, 0, 0, &timeout);
+	}
+
+	if (selection > 0){
+		for(i = 0;i < LongLlistaSck; i++){
+			if (FD_ISSET(LlistaSck[i], &conjunt)) return LlistaSck[i];
+		}
+	}if(selection == 0){ // ha passat timeout
+		return -2;
+	}
+	return -1;
 }
 
 /* Donat el nom DNS "NomDNS" obté la corresponent @IP i l'escriu a "IP*"  */
@@ -404,7 +434,15 @@ int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temp
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé     */
 int ResolDNSaIP(const char *NomDNS, char *IP)
 {
-
+    struct hostent *host;
+	struct sockaddr_in adr;
+	host = gethostbyname(NomDNS);
+	if(host != NULL){
+		memcpy((void *)&adr.sin_addr, host->h_addr_list[0], host->h_length);
+		strcpy(IP,inet_ntoa(adr.sin_addr));
+		return 0;
+	}
+	return -1;
 }
 
 /* Crea un fitxer de "log" de nom "NomFitxLog".                           */
@@ -435,5 +473,88 @@ int Log_TancaFitx(int FitxLog)
 	return close(FitxLog);
 }
 
+int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc)
+{
+	return UDP_CreaSock(*IPloc,portUDPloc);
+}
 
-/* Si ho creieu convenient, feu altres funcions...*/
+int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc){
+
+
+
+	//fem la peticio de registre
+	char SeqBytes[204];
+
+	strcpy(SeqBytes, "R");
+	strcat(SeqBytes, usuari);
+
+	// enviar la peticio
+	int Byteenviats =  UDP_EnviaA(Sck,IPloc,portUDPloc,SeqBytes,strlen(SeqBytes));
+	if(Byteenviats == -1 ){
+		printf(" error de enviar peticio registre al server \n");
+		return -1;
+	}
+
+
+
+	int n = UDP_RepDe(Sck, IPloc, &portUDPloc, SeqBytes, 204);
+	SeqBytes[n] = '\0';
+	if( n ==-1) printf(" error de rebre el paquet AR \n");
+	if(strcmp(SeqBytes,"AR0") == 0){
+		return 1;
+	}
+
+
+
+	return -1;
+}
+
+
+int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc){
+
+
+	char SeqBytes[204];
+
+	strcpy(SeqBytes, "D");
+	strcat(SeqBytes, usuari);
+
+	// enviar la peticio
+	int Byteenviats =  UDP_EnviaA(Sck,IPloc,portUDPloc,SeqBytes,strlen(SeqBytes));
+	if(Byteenviats == -1 ){
+		printf(" error de enviar peticio de desregistre al server \n");
+		return -1;
+	}
+
+
+
+	char IPnode[16];
+	int portNode;
+
+	int n = UDP_RepDe(Sck, IPnode, &portNode, SeqBytes, 204);
+	SeqBytes[n] = '\0';
+	if( n ==-1) printf(" error de rebre el paquet AR \n");
+	if(strcmp(SeqBytes,"AD0") == 0){ // s'ha desresgistrat correctament
+		return 1;
+	}
+
+	return -1;
+}
+
+
+int LUMI_PeticioLocalitzacio(int Sck, const char *preguntador,const char *preguntat,const char *IPloc, int portUDPloc ,char *IPTCP, int *portTCP){
+
+	char SeqBytes[204];
+
+	strcpy(SeqBytes, "L");
+	strcat(SeqBytes, preguntador);
+	strcat(SeqBytes, "#"); // separador
+	strcat(SeqBytes, preguntat);
+
+	int Byteenviats =  UDP_EnviaA(Sck,IPloc,portUDPloc,SeqBytes,strlen(SeqBytes));
+	if(Byteenviats == -1 ){
+		printf(" error de enviar peticio de localitzacio al server \n");
+		return -1;
+	}
+
+
+}
