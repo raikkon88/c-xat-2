@@ -10,6 +10,7 @@
 
 #include "MIp2-lumi.h"
 #include <sys/stat.h>
+#include <netdb.h>
 #include <fcntl.h>
 
 /* Inclusió de llibreries, p.e. #include <sys/types.h> o #include "meu.h" */
@@ -17,6 +18,8 @@
 /*   un #include "MIp2-lumi.h")                                           */
 
 /* Definició de constants, p.e., #define MAX_LINIA 150                    */
+#define MIDA_RESPOSTA_REGISTRE      3
+
 
 /* Declaració de funcions internes que es fan servir en aquest fitxer     */
 /* (les seves definicions es troben més avall) per així fer-les conegudes */
@@ -38,7 +41,6 @@ int Log_CreaFitx(const char *NomFitxLog);
 int Log_Escriu(int FitxLog, const char *MissLog);
 int Log_TancaFitx(int FitxLog);
 
-
 /* Definicio de funcions EXTERNES, és a dir, d'aquelles que en altres     */
 /* fitxers externs es faran servir.                                       */
 /* En termes de capes de l'aplicació, aquest conjunt de funcions externes */
@@ -49,75 +51,6 @@ int Log_TancaFitx(int FitxLog);
 /* Descripció dels arguments de la funció, què son, tipus, si es passen   */
 /* per valor o per referència (la funció els omple)...                    */
 /* Descripció dels valors de retorn de la funció...                       */
-
-
-
-/**
- * ds ha d'estar buit i inicialitzat, domini ha d'estar buit i inicialitzat.
- * Llegeix tots els noms d'usuari del fitxer esmentat i els carrega al dataset en format de tuples.
- * Si quelcom ha anat malament retorna un valor menor a 0
- * Si tot ha anat bé retorna 0.
- */
-int LUMI_llegirUsuaris(struct DataSet *ds, char * filename){
-
-	//open and get the file handle
-	FILE* fh;
-
-	//char * filename = DB_FILE;
-	fh = fopen(filename , "r");
-
-	//check if file exists
-	if (fh == NULL){
-	    printf("file does not exists %s\n", filename);
-	    return 0;
-	}
-
-	const size_t line_size = 300;
-	char* line = malloc(line_size);
-
-	if(fgets(line, line_size, fh) != NULL){
-		strncpy(ds->domini, line, strlen(line) - 1);
-	}
-
-	while (fgets(line, line_size, fh) != NULL)  {
-		char tmp[line_size];
-		bzero(tmp, line_size);
-		strncpy(tmp, line, strlen(line) - 1);
-		struct Registre usuari = create(tmp);
-		insertRegistre(ds, &usuari);
-	}
-	free(line);    // Alliberar memòria reservada.
-	return 0;
-}
-
-/**
- * Escriu el dataset lumi a un fitxer de text.
- * Aquest fitxer l'encapçala el nom del domini com a primera línia i tot seguit tots els usuaris que
- * formen part d'aquest dataset.
- * Si quelcom ha nat malament retorna un valor inferior a 0,
- * Si tot ha anat bé retorna 0.
- */
-int LUMI_escriureUsuaris(struct DataSet *ds, char * filename){
-	FILE * fh;
-	//char * filename = DB_FILE;
-	fh = fopen(filename, "w+");
-
-	if(fh == NULL){
-		printf("file %s does not exists, Something has been wrong...\n", filename);
-		return -1;
-	}
-
-	fputs(ds->domini, fh);
-	fputs("\n", fh);
-	int i;
-	for(i = 0; i < ds->nClients; i++){
-		fputs(ds->data[i].username, fh);
-		fputs("\n", fh);
-	}
-
-	fclose(fh);
-	return 0;
-}
 
 
 /**
@@ -131,12 +64,17 @@ int LUMI_escriureUsuaris(struct DataSet *ds, char * filename){
  */
 int LUMI_inicialitza_servidor(struct DataSet * d, char * filename, char * ip, int port){
     init(d);
-	int lectura = LUMI_llegirUsuaris(d, filename);
+	int lectura = llegirUsuaris(d, filename);
 	if(lectura < 0)
 		return -1;
 
 	// Inicialitzem el socket d'escolta del servidor.
 	return UDP_CreaSock(ip, port);
+}
+
+void LUMI_crea_resposta_registre(char * resposta, char * tipusResposta, int valorResposta){
+    bzero(resposta, MIDA_RESPOSTA_REGISTRE);
+    sprintf(resposta, "%s%s%i", "A", tipusResposta, valorResposta);
 }
 
 /**
@@ -191,16 +129,68 @@ int LUMI_processa(int sck, struct DataSet * d){
 	int  portRem = 0;
 	char missatge[MAX_MESSAGE_LENGHT];
 	bzero(missatge, MAX_MESSAGE_LENGHT);
-	int res = UDP_RepDe(sck, ipRem, &portRem, missatge, MAX_MESSAGE_LENGHT);
+	int longitud = UDP_RepDe(sck, ipRem, &portRem, missatge, MAX_MESSAGE_LENGHT);
 
-	if(res < 0){
+	if(longitud < 0){
 		return -1;
 	}
 	else{
-		printf("%s\n", missatge);
+		if(missatge[0] == 'R'){
+			printf("%s -> %i bytes\n", "Petició de registre", longitud);
+			int resultatRegistre = LUMI_registre(missatge, longitud, d, ipRem, portRem, 1);
+            // int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes, int LongSeqBytes
+            char resposta[MIDA_RESPOSTA_REGISTRE] = "";
+            LUMI_crea_resposta_registre(resposta, "R", resultatRegistre);
+            printf("%s\n", resposta);
+			int resultatResposta = UDP_EnviaA(sck, ipRem, portRem, resposta, MIDA_RESPOSTA_REGISTRE);
+            if(resultatResposta < 0){
+                // Escriure Log
+                printf("%s\n", "Error al enviar la resposta del registre.");
+            }
+		}
+		else if(missatge[0] == 'D'){
+			printf("%s -> %i bytes\n", "Petició de desregistre", longitud);
+			int resultatRegistre = LUMI_registre(missatge, longitud, d, ipRem, portRem, 0);
+            char resposta[MIDA_RESPOSTA_REGISTRE]="";
+            LUMI_crea_resposta_registre(resposta, "D", resultatRegistre);
+            printf("%s\n", resposta);
+			int resultatResposta = UDP_EnviaA(sck, ipRem, portRem, resposta, MIDA_RESPOSTA_REGISTRE);
+            if(resultatResposta < 0){
+                // Escriure Log
+                printf("%s\n", "Error al enviar la resposta del desregistre.");
+            }
+		}
+		else if(missatge[0] == 'L'){
+			printf("%s -> %i bytes\n","Petició de localització.", longitud);
+		}
 	}
 }
 
+/**
+ * S'encarrega de deixar a un usuari en linia o fóra de línia dins del mateix servidor.
+ * L'usuari que s'acaba de registrar queda amb l'estat online.
+ * Parseja la cadena de caràcters rebut.
+ * Actualitza el dataset amb la informació de l'usuari.
+ * online estipula si l'acció és un registre o un desregistre.
+ */
+int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, int portRem, int online){
+	// S'extreuen els camps del missatge rebut.
+	char * username = strncpy(rebut, rebut + 1, longitud - 1);
+	username[longitud-1]='\0';
+	printf("%s\n",username);
+
+	// Genero un registre i el marquem com online amb la informació que s'ha rebut.
+	struct Registre user = createRegistre(username, portRem, ipRem, online);
+	updateRegistre(d, &user);
+
+    // TODO : S'ha de treure el debug...
+    showDataSet(d);
+    return 0;
+}
+
+int LUMI_localitza(char * rebut, int longitud){
+
+}
 
 /* Definicio de funcions INTERNES, és a dir, d'aquelles que es faran      */
 /* servir només en aquest mateix fitxer.                                  */
@@ -267,7 +257,7 @@ int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes,
 	{
 		perror("Error en sendto");
 		close(Sck);
-		exit(-1);
+		return -1;
 	}
 
 	return bescrit;
@@ -296,13 +286,13 @@ int UDP_RepDe(int Sck, char *IPrem, int *portUDPrem, char *SeqBytes, int LongSeq
 	{
 		perror("Error recvfrom\n");
 		close(Sck);
-		exit(-1);
+		return -1;
 	}
 
 	//actualitzar IPrem i portUDPrem
 	strcpy(IPrem,inet_ntoa(adrrem.sin_addr));
 	*portUDPrem=ntohs(adrrem.sin_port);
-
+	return bllegit - 1; // Se li resta el '\0'
 }
 
 /* S’allibera (s’esborra) el socket UDP d’identificador “Sck”.            */
@@ -404,7 +394,37 @@ int UDP_TrobaAdrSockRem(int Sck, char *IPrem, int *portUDPrem)
 /* l’identificador d’aquest socket.                                       */
 int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temps)
 {
+    fd_set conjunt;
+	FD_ZERO(&conjunt);
+	int i;
+	int descmax = 0;
+	for(i = 0; i < LongLlistaSck; i++){
+		int fd = LlistaSck[i];
+		FD_SET(fd,&conjunt);
+		if(fd > descmax){
+			descmax = fd;
+		}
+	}
 
+	struct timeval timeout;
+	timeout.tv_sec = 0;
+  	timeout.tv_usec = Temps*1000;
+
+	int selection;
+	if(Temps == -1){
+		selection = select(descmax+1, &conjunt, 0, 0, 0);
+	}else{
+		selection = select(descmax+1, &conjunt, 0, 0, &timeout);
+	}
+
+	if (selection > 0){
+		for(i = 0;i < LongLlistaSck; i++){
+			if (FD_ISSET(LlistaSck[i], &conjunt)) return LlistaSck[i];
+		}
+	}if(selection == 0){ // ha passat timeout
+		return -2;
+	}
+	return -1;
 }
 
 /* Donat el nom DNS "NomDNS" obté la corresponent @IP i l'escriu a "IP*"  */
@@ -415,7 +435,17 @@ int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temp
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé     */
 int ResolDNSaIP(const char *NomDNS, char *IP)
 {
-
+    // hostent serveix per desar informació de un host en concret
+    // Paràmetres com host name, adreça ipv4...
+    struct hostent *host;
+	struct sockaddr_in adr;
+	host = gethostbyname(NomDNS);
+	if(host != NULL){
+		memcpy((void *)&adr.sin_addr, host->h_addr_list[0], host->h_length);
+		strcpy(IP,inet_ntoa(adr.sin_addr));
+		return 0;
+	}
+	return -1;
 }
 
 /* Crea un fitxer de "log" de nom "NomFitxLog".                           */
@@ -446,5 +476,83 @@ int Log_TancaFitx(int FitxLog)
 	return close(FitxLog);
 }
 
+int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc)
+{
+	return UDP_CreaSock(IPloc,portUDPloc);
+}
 
-/* Si ho creieu convenient, feu altres funcions...*/
+int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc){
+
+	//fem la peticio de registre
+	char SeqBytes[204];
+
+	strcpy(SeqBytes, "R");
+	strcat(SeqBytes, usuari);
+
+	// enviar la peticio
+	int Byteenviats =  UDP_EnviaA(Sck,IPloc,portUDPloc,SeqBytes,strlen(SeqBytes));
+	if(Byteenviats == -1 ){
+		printf(" error de enviar peticio registre al server \n");
+		return -1;
+	}
+
+    char * ipRemitent;
+	int n = UDP_RepDe(Sck, ipRemitent, &portUDPloc, SeqBytes, 204);
+	SeqBytes[n] = '\0';
+	if( n ==-1) printf(" error de rebre el paquet AR \n");
+	if(strcmp(SeqBytes,"AR0") == 0){
+		return 1;
+	}
+
+	return -1;
+}
+
+
+int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc){
+
+
+	char SeqBytes[204];
+
+	strcpy(SeqBytes, "D");
+	strcat(SeqBytes, usuari);
+
+	// enviar la peticio
+	int Byteenviats =  UDP_EnviaA(Sck,IPloc,portUDPloc,SeqBytes,strlen(SeqBytes));
+	if(Byteenviats == -1 ){
+		printf(" error de enviar peticio de desregistre al server \n");
+		return -1;
+	}
+
+
+
+	char IPnode[16];
+	int portNode;
+
+	int n = UDP_RepDe(Sck, IPnode, &portNode, SeqBytes, 204);
+	SeqBytes[n] = '\0';
+	if( n ==-1) printf(" error de rebre el paquet AR \n");
+	if(strcmp(SeqBytes,"AD0") == 0){ // s'ha desresgistrat correctament
+		return 1;
+	}
+
+	return -1;
+}
+
+
+int LUMI_PeticioLocalitzacio(int Sck, const char *preguntador,const char *preguntat,const char *IPloc, int portUDPloc ,char *IPTCP, int *portTCP){
+
+	char SeqBytes[204];
+
+	strcpy(SeqBytes, "L");
+	strcat(SeqBytes, preguntador);
+	strcat(SeqBytes, "#"); // separador
+	strcat(SeqBytes, preguntat);
+
+	int Byteenviats =  UDP_EnviaA(Sck,IPloc,portUDPloc,SeqBytes,strlen(SeqBytes));
+	if(Byteenviats == -1 ){
+		printf(" error de enviar peticio de localitzacio al server \n");
+		return -1;
+	}
+
+
+}

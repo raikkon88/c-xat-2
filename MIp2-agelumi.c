@@ -14,14 +14,34 @@
 #include "MIp2-lumi.h"
 
 /* Definició de constants, p.e., #define MAX_LINIA 150                    */
+#define IP_DEFAULT      "0.0.0.0"       // Ip per defecte que utilitza el servidor per escoltar peticions UDP.
+#define PORT_DEFAULT    0            // Port on el servidor escoltarà peticions UDP per defecte.
 
+#define IP_SERVER      "192.168.1.103"
+#define PORT_SERVER    8765
 
 int main(int argc,char *argv[])
 {
-    
 
- /* Declaració de variables, p.e., int n;                                 */
+	char username[50];
+	int resultatAccio;
 
- /* Expressions, estructures de control, crides a funcions, etc.          */
+	int SckLUMI = LUMI_CrearSocketClient(IP_DEFAULT,PORT_DEFAULT);
+	if(SckLUMI == -1){
+		printf("\n...error al crear el socket.\n");
+	}
+
+	printf("\n scoket client inicialitzat \n");
+
+	//registre
+	printf(" Entra el teu username: ");
+	scanf("%s",username);
+
+	//enviar peticio registre
+	resultatAccio=LUMI_PeticioRegistre(SckLUMI,usuari,IP_SERVER,PORT_SERVER);
+
+	if(resultatAccio==-1) printf("\n...error fent peticio registre \n");
+
+	return 0;
 
  }

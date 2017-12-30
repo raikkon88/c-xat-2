@@ -12,11 +12,12 @@ struct Registre create (char* _username){
 /**
  * Implementació del constructor amb paràmetres.
  */
-struct Registre  createRegistre(char* _username, int _port, char* _ip){
+struct Registre  createRegistre(char* _username, int _port, char* _ip, int _online){
     struct Registre r;
     strcpy(r.username, _username);
     r.port = _port;
     strcpy(r.ip, _ip);
+    r.online = _online;
     return r;
 }
 
@@ -34,10 +35,9 @@ int isOnline(struct Registre * r){
  * else value is assigned to online parameter.
  */
 void setOnLine(struct Registre * r, int value){
-    if(value != 0 && value != 1){
-        r->online = 0;
+    if(value == 0 || value == 1){
+        r->online = value;
     }
-    r->online = 1;
 }
 
 /**
