@@ -32,13 +32,13 @@ int main(int argc,char *argv[])
         printf("ERROR -> %s\n","Error en la inicialització del servidor.");
     }
 
-    showDataSet(&d);
-
     printf("%s\n", "Initialization success ... ");
     int socket = resultatAccio;
     resultatAccio = LUMI_start(socket, &d);
     if(resultatAccio < 0){
         printf("ERROR -> %s\n","Error en el processament de peticions.");
     }
+
+    showDataSet(&d);
 
 }
