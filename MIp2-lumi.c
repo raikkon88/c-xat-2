@@ -160,6 +160,8 @@ int LUMI_processa(int sck, struct DataSet * d){
 		}
 		else if(missatge[0] == 'L'){
 			printf("%s -> %i bytes\n","Petició de localització.", longitud);
+            int resultatLocalitzacio = LUMI_localitza(missatge, longitud, d);
+
 		}
 	}
 }
@@ -187,8 +189,10 @@ int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, 
     return 0;
 }
 
-int LUMI_localitza(char * rebut, int longitud){
-
+int LUMI_localitza(char * rebut, int longitud, struct DataSet * d){
+    // S'extreuen els camps del missatge rebut.
+    char * direccions = strncpy(rebut, rebut + 1, longitud);
+    printf("%s\n", direccions);
 }
 
 /* Definicio de funcions INTERNES, és a dir, d'aquelles que es faran      */
@@ -289,13 +293,10 @@ int UDP_RepDe(int Sck, char *IPrem, int *portUDPrem, char *SeqBytes, int LongSeq
 		close(Sck);
 		return -1;
 	}
-	//actualitzar IPrem i portUDPrem
-    printf("%s\n",inet_ntoa(adrrem.sin_addr));
+
     bzero(IPrem, MAX_IP_LENGTH);
 	strcpy(IPrem,inet_ntoa(adrrem.sin_addr));
-    printf("actualitzar IPrem\n");
 	*portUDPrem=ntohs(adrrem.sin_port);
-    printf("actualitzar port\n");
 	return bllegit - 1; // Se li resta el '\0'
 }
 
@@ -500,13 +501,11 @@ int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int por
 		return -1;
 	}
 
-    //printf("S'han enviat %i bytes\n", Byteenviats);
     bzero(SeqBytes, MAX_MESSAGE_LENGHT);
     // Rebre resposta del servidor :
     char ipRemitent[MAX_IP_LENGTH];
     bzero(ipRemitent, MAX_IP_LENGTH);
 	int n = UDP_RepDe(Sck, ipRemitent, &portUDPloc, SeqBytes, TOTAL_LENGHT_MESSAGE);
-	//SeqBytes[n] = '\0';
 	if( n ==-1) printf(" error de rebre el paquet AR \n");
 	if(strcmp(SeqBytes,"AR0") == 0){
 		return 1;
@@ -534,14 +533,12 @@ int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int 
 		printf(" error de enviar peticio de desregistre al server \n");
 		return -1;
 	}
-
-
-
+    bzero(SeqBytes, MAX_MESSAGE_LENGHT);
 	char IPnode[MAX_IP_LENGTH];
+    bzero(IPnode, MAX_IP_LENGTH);
 	int portNode;
 
 	int n = UDP_RepDe(Sck, IPnode, &portNode, SeqBytes, TOTAL_LENGHT_MESSAGE);
-	SeqBytes[n] = '\0';
 	if( n ==-1) printf(" error de rebre el paquet AR \n");
 	if(strcmp(SeqBytes,"AD0") == 0){ // s'ha desresgistrat correctament
 		return 1;
@@ -631,9 +628,6 @@ int equals(struct Registre * r1, struct Registre * r2){
 }
 
 // FUNCTIONS DataSet
-
-
-
 
 /**
  * Implementacions per l'estructura DataSet

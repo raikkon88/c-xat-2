@@ -91,7 +91,8 @@ int LUMI_inicialitza_servidor(struct DataSet * d, char * filename,  char * ip, i
 int LUMI_start(int socket, struct DataSet * d);
 int LUMI_processa(int sck, struct DataSet * d);
 int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, int portRem, int online);
-int LUMI_acceptaRegistre();
+int LUMI_Localitza(char * rebut, int longitud, struct DataSet * d);
+//int LUMI_acceptaRegistre();
 
 
 void LUMI_crea_resposta_registre(char * resposta, char * tipusResposta, int valorResposta);
