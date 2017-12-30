@@ -17,6 +17,7 @@
 
 /* Definició de constants, p.e., #define MAX_LINIA 150                    */
 #define MIDA_RESPOSTA_REGISTRE      3
+#define MAX_LINIA                   200
 
 
 /* Declaració de funcions internes que es fan servir en aquest fitxer     */
@@ -35,6 +36,7 @@ int UDP_Rep(int Sck, char *SeqBytes, int LongSeqBytes);
 int UDP_TrobaAdrSockRem(int Sck, char *IPrem, int *portUDPrem);
 int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temps);
 int ResolDNSaIP(const char *NomDNS, char *IP);
+void DnsDeMi(const char *direccio, char * dns);
 int Log_CreaFitx(const char *NomFitxLog);
 int Log_Escriu(int FitxLog, const char *MissLog);
 int Log_TancaFitx(int FitxLog);
@@ -453,6 +455,15 @@ int ResolDNSaIP(const char *NomDNS, char *IP)
 	return -1;
 }
 
+/**
+ * Donada una direcció MI extreu el nom dns.
+ * dns conté la part del dns de la direcció MI de direcció.
+ */
+void DnsDeMi(const char *direccio, char * dns){
+    char username[200];
+    sscanf(direccio, "%[^'@']@%s", username, dns);
+}
+
 /* Crea un fitxer de "log" de nom "NomFitxLog".                           */
 /* "NomFitxLog" és un "string" de C (vector de chars imprimibles acabat   */
 /* en '\0') d'una longitud qualsevol.                                     */
@@ -543,30 +554,43 @@ int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int 
 	if(strcmp(SeqBytes,"AD0") == 0){ // s'ha desresgistrat correctament
 		return 1;
 	}
-
-	return -1;
+    else if(strcmp(SeqBytes, "AD1") == 0){
+        return -2;
+    }
+    else{
+        return -1;
+    }
 }
 
 
-int LUMI_PeticioLocalitzacio(int Sck, const char *preguntador,const char *preguntat,const char *IPloc, int portUDPloc ,char *IPTCP, int *portTCP){
+int LUMI_PeticioLocalitzacio(int Sck, const char *MI_preguntador,const char *MI_preguntat, int portUDPloc){
 
 	char SeqBytes[TOTAL_LENGHT_MESSAGE];
 
-
 	strcpy(SeqBytes, "L");
-	strcat(SeqBytes, preguntador);
+	strcat(SeqBytes, MI_preguntador);
 	strcat(SeqBytes, "#"); // separador
-	strcat(SeqBytes, preguntat);
+	strcat(SeqBytes, MI_preguntat);
 
-	int Byteenviats =  UDP_EnviaA(Sck,IPloc,portUDPloc,SeqBytes,strlen(SeqBytes));
+    char ipServ[MAX_IP_LENGTH];
+    char dns[MAX_LINIA];
+    bzero(dns, MAX_LINIA);
+    bzero(ipServ, MAX_IP_LENGTH);
+
+    DnsDeMi(MI_preguntador, dns);
+    ResolDNSaIP(dns, ipServ);
+
+    printf("%s -> %s \n", dns, ipServ);
+
+	int Byteenviats =  UDP_EnviaA(Sck,ipServ,portUDPloc,SeqBytes,strlen(SeqBytes));
 	if(Byteenviats == -1 ){
 		printf(" error de enviar peticio de localitzacio al server \n");
 		return -1;
 	}
+    return 0;
 }
 
 // FUNCTIONS REGISTRE
-
 
 struct Registre create (char* _username){
     struct Registre r;

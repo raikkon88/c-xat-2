@@ -99,4 +99,4 @@ void LUMI_crea_resposta_registre(char * resposta, char * tipusResposta, int valo
 int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc);
 int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc);
 int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc);
-int LUMI_PeticioLocalitzacio(int Sck, const char *preguntador,const char *preguntat,const char *IPloc, int portUDPloc ,char *IPTCP, int *portTCP);
+int LUMI_PeticioLocalitzacio(int Sck, const char *MI_preguntador,const char *MI_preguntat, int portUDPloc);
