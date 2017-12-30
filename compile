@@ -1,0 +1,3 @@
+#!/bin/bash
+gcc -o client MIp2-agelumi.c MIp2-lumi.c
+gcc -o server MIp2-nodelumi.c MIp2-lumi.c
