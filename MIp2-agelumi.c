@@ -18,7 +18,7 @@
 #define PORT_DEFAULT    0            // Port on el servidor escoltarà peticions UDP per defecte.
 
 #define IP_SERVER      "192.168.1.103"
-#define PORT_SERVER    0
+#define PORT_SERVER    8765
 
 int main(int argc,char *argv[])
 {

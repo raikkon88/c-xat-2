@@ -10,6 +10,7 @@
 
 #include "MIp2-lumi.h"
 #include <sys/stat.h>
+#include <netdb.h>
 #include <fcntl.h>
 
 /* Inclusió de llibreries, p.e. #include <sys/types.h> o #include "meu.h" */
@@ -411,9 +412,9 @@ int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temp
 
 	int selection;
 	if(Temps == -1){
-		selection = select(maxSck+1, &conjunt, 0, 0, 0);
+		selection = select(descmax+1, &conjunt, 0, 0, 0);
 	}else{
-		selection = select(maxSck+1, &conjunt, 0, 0, &timeout);
+		selection = select(descmax+1, &conjunt, 0, 0, &timeout);
 	}
 
 	if (selection > 0){
@@ -434,6 +435,8 @@ int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temp
 /* Retorna -1 si hi ha error; un valor positiu qualsevol si tot va bé     */
 int ResolDNSaIP(const char *NomDNS, char *IP)
 {
+    // hostent serveix per desar informació de un host en concret
+    // Paràmetres com host name, adreça ipv4...
     struct hostent *host;
 	struct sockaddr_in adr;
 	host = gethostbyname(NomDNS);
@@ -475,12 +478,10 @@ int Log_TancaFitx(int FitxLog)
 
 int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc)
 {
-	return UDP_CreaSock(*IPloc,portUDPloc);
+	return UDP_CreaSock(IPloc,portUDPloc);
 }
 
 int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc){
-
-
 
 	//fem la peticio de registre
 	char SeqBytes[204];
@@ -495,16 +496,13 @@ int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int por
 		return -1;
 	}
 
-
-
-	int n = UDP_RepDe(Sck, IPloc, &portUDPloc, SeqBytes, 204);
+    char * ipRemitent;
+	int n = UDP_RepDe(Sck, ipRemitent, &portUDPloc, SeqBytes, 204);
 	SeqBytes[n] = '\0';
 	if( n ==-1) printf(" error de rebre el paquet AR \n");
 	if(strcmp(SeqBytes,"AR0") == 0){
 		return 1;
 	}
-
-
 
 	return -1;
 }
