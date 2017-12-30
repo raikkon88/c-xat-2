@@ -6,7 +6,8 @@
 void init(struct DataSet * ds){
     int i;
     for(i=0; i < MAX_CLIENTS; i++){
-        struct Registre r = createRegistre("", -1, "", 0);
+        struct Registre r;
+        ini(&r, "", -1, "", 0);
         ds->data[i] = r;
     }
 

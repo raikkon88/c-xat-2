@@ -10,17 +10,9 @@
 
 /* Inclusió de llibreries, p.e. #include <stdio.h> o #include "meu.h"     */
 /* Incloem "MIp2-lumi.h" per poder fer crides a la interfície de LUMI     */
+
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include "Registre.c"
-#include "DataSet.c"
-#include "MIp2-lumi.c"
+#include "MIp2-lumi.h"
 
 #define DB_FILE         "usuaris.txt"   // Nom del fitxer on es desen els usuaris en el servidor
 #define IP_DEFAULT      "0.0.0.0"       // Ip per defecte que utilitza el servidor per escoltar peticions UDP.

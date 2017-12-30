@@ -9,9 +9,7 @@
 /**************************************************************************/
 
 #include "MIp2-lumi.h"
-#include <sys/stat.h>
-#include <netdb.h>
-#include <fcntl.h>
+
 
 /* Inclusió de llibreries, p.e. #include <sys/types.h> o #include "meu.h" */
 /*  (si les funcions externes es cridessin entre elles, faria falta fer   */
@@ -180,10 +178,11 @@ int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, 
 	printf("%s\n",username);
 
 	// Genero un registre i el marquem com online amb la informació que s'ha rebut.
-	struct Registre user = createRegistre(username, portRem, ipRem, online);
+	struct Registre user;
+    ini(&user, username, portRem, ipRem, online);
 	updateRegistre(d, &user);
 
-    // TODO : S'ha de treure el debug...
+    // TODO : S'ha canviar el mostrar dataset per el escriure log.
     showDataSet(d);
     return 0;
 }
@@ -553,6 +552,207 @@ int LUMI_PeticioLocalitzacio(int Sck, const char *preguntador,const char *pregun
 		printf(" error de enviar peticio de localitzacio al server \n");
 		return -1;
 	}
+}
+
+// FUNCTIONS REGISTRE
 
 
+struct Registre create (char* _username){
+    struct Registre r;
+    strcpy(r.username, _username);
+    r.port = -1;
+    strcpy(r.ip, "");
+    r.online = 0;
+    return r;
+}
+
+/**
+ * Implementació del constructor amb paràmetres.
+ */
+void ini(struct Registre * r, char* _username, int _port, char* _ip, int _online){
+    //struct Registre r;
+    strcpy(r->username, _username);
+    r->port = _port;
+    strcpy(r->ip, _ip);
+    r->online = _online;
+    //return r;
+}
+
+/**
+ * Return true if the register is online, else return false.
+ * True is expressed as a number 1 and false as number 0.
+ */
+int isOnline(struct Registre * r){
+    return r->online;
+}
+
+/**
+ * Assigne the online value.
+ * If value is different thant 0 or 1 the assigned value is 0.
+ * else value is assigned to online parameter.
+ */
+void setOnLine(struct Registre * r, int value){
+    if(value == 0 || value == 1){
+        r->online = value;
+    }
+}
+
+/**
+ * Mosta la tupla registre per pantalla.
+ */
+void show(struct Registre * reg){
+    printf("Username  : %s\n", reg->username);
+    printf("Port      : %i\n", reg->port);
+    printf("IP        : %s\n", reg->ip);
+    printf("Connected : %i\n", reg->online);
+}
+
+/**
+ * Compara dues tuples, retorna 0 si son iguals, difeerent de 0 altrament.
+ * Dues tuples son iguals si tenen el mateix nom, o bé si tenen la mateixa ip i port.
+ * Parlarem del mateix client.
+ */
+int equals(struct Registre * r1, struct Registre * r2){
+    return (strcmp(r1->username, r2->username) || (strcmp(r1->ip, r2->ip) && r1->port == r2->port));
+}
+
+// FUNCTIONS DataSet
+
+
+
+
+/**
+ * Implementacions per l'estructura DataSet
+ */
+void init(struct DataSet * ds){
+    int i;
+    for(i=0; i < MAX_CLIENTS; i++){
+        struct Registre r;
+        ini(&r, "", -1, "", 0);
+        ds->data[i] = r;
+    }
+
+    bzero(ds->domini, MAX_LENGHT_DOMINI);
+
+    ds->nClients = 0;
+}
+
+int getPosicio(struct DataSet * ds, struct Registre *r){
+    int pos = 0;
+    while(pos < ds->nClients && equals(&ds->data[pos], r) != 0){
+        pos++;
+    }
+    if(pos == ds->nClients) return -1;
+    else return pos;
+}
+
+void showDataSet(struct DataSet * ds){
+    printf("%s", "#  ");
+    printf("%s\n", ds->domini);
+    printf("%s\n", "#####################################################################");
+
+    int i;
+    for(i = 0; i < ds->nClients; i++){
+        show(&ds->data[i]);
+        printf("%s\n","------------------------------------------------------------------");
+    }
+}
+
+void insertRegistre(struct DataSet * ds, struct Registre *r){
+    ds->data[ds->nClients] = *r;
+    ds->nClients++;
+}
+
+int deleteRegistre(struct DataSet * ds, struct Registre *r){
+    int posRegistre = getPosicio(ds, r);
+
+    if(posRegistre < 0){
+        return -1;
+    }
+    else{
+        while(posRegistre + 1 < ds->nClients){
+            ds->data[posRegistre] = ds->data[posRegistre+1];
+            posRegistre++;
+        }
+        ds->nClients--;
+    }
+    return 1;
+}
+
+int updateRegistre(struct DataSet * ds, struct Registre *r){
+    int posRegistre = getPosicio(ds, r);
+    if(posRegistre < 0){
+        return -1;
+    }
+    else{
+        strcpy(ds->data[posRegistre].ip, r->ip);
+        ds->data[posRegistre].port = ds->data[posRegistre].port;
+    }
+}
+
+/**
+ * ds ha d'estar buit i inicialitzat, domini ha d'estar buit i inicialitzat.
+ * Llegeix tots els noms d'usuari del fitxer esmentat i els carrega al dataset en format de tuples.
+ * Si quelcom ha anat malament retorna un valor menor a 0
+ * Si tot ha anat bé retorna 0.
+ */
+int llegirUsuaris(struct DataSet *ds, char * filename){
+
+	//open and get the file handle
+	FILE* fh;
+
+	//char * filename = DB_FILE;
+	fh = fopen(filename , "r");
+
+	//check if file exists
+	if (fh == NULL){
+	    printf("file does not exists %s\n", filename);
+	    return 0;
+	}
+
+	const size_t line_size = 300;
+	char* line = malloc(line_size);
+
+	if(fgets(line, line_size, fh) != NULL){
+		strncpy(ds->domini, line, strlen(line) - 1);
+	}
+
+	while (fgets(line, line_size, fh) != NULL)  {
+		char tmp[line_size];
+		bzero(tmp, line_size);
+		strncpy(tmp, line, strlen(line) - 1);
+		struct Registre usuari = create(tmp);
+		insertRegistre(ds, &usuari);
+	}
+	free(line);    // Alliberar memòria reservada.
+	return 0;
+}
+
+/**
+ * Escriu el dataset lumi a un fitxer de text.
+ * Aquest fitxer l'encapçala el nom del domini com a primera línia i tot seguit tots els usuaris que
+ * formen part d'aquest dataset.
+ * Si quelcom ha nat malament retorna un valor inferior a 0,
+ * Si tot ha anat bé retorna 0.
+ */
+int escriureUsuaris(struct DataSet *ds, char * filename){
+	FILE * fh;
+	//char * filename = DB_FILE;
+	fh = fopen(filename, "w+");
+
+	if(fh == NULL){
+		printf("file %s does not exists, Something has been wrong...\n", filename);
+		return -1;
+	}
+
+	fputs(ds->domini, fh);
+	fputs("\n", fh);
+	int i;
+	for(i = 0; i < ds->nClients; i++){
+		fputs(ds->data[i].username, fh);
+		fputs("\n", fh);
+	}
+
+	fclose(fh);
+	return 0;
 }

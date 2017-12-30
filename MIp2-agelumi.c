@@ -11,6 +11,7 @@
 
 /* Inclusió de llibreries, p.e. #include <stdio.h> o #include "meu.h"     */
 /* Incloem "MIp2-lumi.h" per poder fer crides a la interfície de LUMI     */
+#include <stdio.h>
 #include "MIp2-lumi.h"
 
 /* Definició de constants, p.e., #define MAX_LINIA 150                    */
@@ -38,7 +39,7 @@ int main(int argc,char *argv[])
 	scanf("%s",username);
 
 	//enviar peticio registre
-	resultatAccio=LUMI_PeticioRegistre(SckLUMI,usuari,IP_SERVER,PORT_SERVER);
+	resultatAccio=LUMI_PeticioRegistre(SckLUMI,username,IP_SERVER,PORT_SERVER);
 
 	if(resultatAccio==-1) printf("\n...error fent peticio registre \n");
 

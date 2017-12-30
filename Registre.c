@@ -12,12 +12,12 @@ struct Registre create (char* _username){
 /**
  * Implementació del constructor amb paràmetres.
  */
-struct Registre  createRegistre(char* _username, int _port, char* _ip, int _online){
+void ini(struct Registre * r, char* _username, int _port, char* _ip, int _online){
     struct Registre r;
-    strcpy(r.username, _username);
-    r.port = _port;
-    strcpy(r.ip, _ip);
-    r.online = _online;
+    strcpy(r->username, _username);
+    r->port = _port;
+    strcpy(r->ip, _ip);
+    r->online = _online;
     return r;
 }
 
