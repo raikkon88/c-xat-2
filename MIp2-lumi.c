@@ -17,6 +17,7 @@
 
 /* Definició de constants, p.e., #define MAX_LINIA 150                    */
 #define MIDA_RESPOSTA_REGISTRE      3
+#define MAX_LINIA                   200
 
 
 /* Declaració de funcions internes que es fan servir en aquest fitxer     */
@@ -35,6 +36,7 @@ int UDP_Rep(int Sck, char *SeqBytes, int LongSeqBytes);
 int UDP_TrobaAdrSockRem(int Sck, char *IPrem, int *portUDPrem);
 int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temps);
 int ResolDNSaIP(const char *NomDNS, char *IP);
+void DnsDeMi(const char *direccio, char * dns);
 int Log_CreaFitx(const char *NomFitxLog);
 int Log_Escriu(int FitxLog, const char *MissLog);
 int Log_TancaFitx(int FitxLog);
@@ -123,7 +125,7 @@ int LUMI_start(int socket, struct DataSet * d){
  * SUCCESS -> return 0
  */
 int LUMI_processa(int sck, struct DataSet * d){
-	char ipRem[15] = "";
+	char ipRem[MAX_IP_LENGTH] = "";
 	int  portRem = 0;
 	char missatge[MAX_MESSAGE_LENGHT];
 	bzero(missatge, MAX_MESSAGE_LENGHT);
@@ -139,7 +141,7 @@ int LUMI_processa(int sck, struct DataSet * d){
             // int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes, int LongSeqBytes
             char resposta[MIDA_RESPOSTA_REGISTRE] = "";
             LUMI_crea_resposta_registre(resposta, "R", resultatRegistre);
-            printf("%s\n", resposta);
+            printf("Resposta : %s\n", resposta);
 			int resultatResposta = UDP_EnviaA(sck, ipRem, portRem, resposta, MIDA_RESPOSTA_REGISTRE);
             if(resultatResposta < 0){
                 // Escriure Log
@@ -151,7 +153,7 @@ int LUMI_processa(int sck, struct DataSet * d){
 			int resultatRegistre = LUMI_registre(missatge, longitud, d, ipRem, portRem, 0);
             char resposta[MIDA_RESPOSTA_REGISTRE]="";
             LUMI_crea_resposta_registre(resposta, "D", resultatRegistre);
-            printf("%s\n", resposta);
+            printf("Resposta : %s\n", resposta);
 			int resultatResposta = UDP_EnviaA(sck, ipRem, portRem, resposta, MIDA_RESPOSTA_REGISTRE);
             if(resultatResposta < 0){
                 // Escriure Log
@@ -160,6 +162,8 @@ int LUMI_processa(int sck, struct DataSet * d){
 		}
 		else if(missatge[0] == 'L'){
 			printf("%s -> %i bytes\n","Petició de localització.", longitud);
+            int resultatLocalitzacio = LUMI_localitza(missatge, longitud, d);
+
 		}
 	}
 }
@@ -173,8 +177,8 @@ int LUMI_processa(int sck, struct DataSet * d){
  */
 int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, int portRem, int online){
 	// S'extreuen els camps del missatge rebut.
-	char * username = strncpy(rebut, rebut + 1, longitud - 1);
-	username[longitud-1]='\0';
+	char * username = strncpy(rebut, rebut + 1, longitud);
+	username[longitud]='\0';
 	printf("%s\n",username);
 
 	// Genero un registre i el marquem com online amb la informació que s'ha rebut.
@@ -187,8 +191,10 @@ int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, 
     return 0;
 }
 
-int LUMI_localitza(char * rebut, int longitud){
-
+int LUMI_localitza(char * rebut, int longitud, struct DataSet * d){
+    // S'extreuen els camps del missatge rebut.
+    char * direccions = strncpy(rebut, rebut + 1, longitud);
+    printf("%s\n", direccions);
 }
 
 /* Definicio de funcions INTERNES, és a dir, d'aquelles que es faran      */
@@ -243,6 +249,8 @@ int UDP_CreaSock(const char *IPloc, int portUDPloc)
 /* Retorna -1 si hi ha error; el nombre de bytes enviats si tot va bé.    */
 int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes, int LongSeqBytes)
 {
+    //printf("S'esta enviant %s\n", SeqBytes);
+
 	struct sockaddr_in adrrem;
 	adrrem.sin_family=AF_INET;
 	adrrem.sin_port=htons(portUDPrem);
@@ -288,7 +296,7 @@ int UDP_RepDe(int Sck, char *IPrem, int *portUDPrem, char *SeqBytes, int LongSeq
 		return -1;
 	}
 
-	//actualitzar IPrem i portUDPrem
+    bzero(IPrem, MAX_IP_LENGTH);
 	strcpy(IPrem,inet_ntoa(adrrem.sin_addr));
 	*portUDPrem=ntohs(adrrem.sin_port);
 	return bllegit - 1; // Se li resta el '\0'
@@ -447,6 +455,15 @@ int ResolDNSaIP(const char *NomDNS, char *IP)
 	return -1;
 }
 
+/**
+ * Donada una direcció MI extreu el nom dns.
+ * dns conté la part del dns de la direcció MI de direcció.
+ */
+void DnsDeMi(const char *direccio, char * dns){
+    char username[200];
+    sscanf(direccio, "%[^'@']@%s", username, dns);
+}
+
 /* Crea un fitxer de "log" de nom "NomFitxLog".                           */
 /* "NomFitxLog" és un "string" de C (vector de chars imprimibles acabat   */
 /* en '\0') d'una longitud qualsevol.                                     */
@@ -483,7 +500,7 @@ int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc)
 int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc){
 
 	//fem la peticio de registre
-	char SeqBytes[204];
+	char SeqBytes[TOTAL_LENGHT_MESSAGE];
 
 	strcpy(SeqBytes, "R");
 	strcat(SeqBytes, usuari);
@@ -495,22 +512,28 @@ int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int por
 		return -1;
 	}
 
-    char * ipRemitent;
-	int n = UDP_RepDe(Sck, ipRemitent, &portUDPloc, SeqBytes, 204);
-	SeqBytes[n] = '\0';
+    bzero(SeqBytes, MAX_MESSAGE_LENGHT);
+    // Rebre resposta del servidor :
+    char ipRemitent[MAX_IP_LENGTH];
+    bzero(ipRemitent, MAX_IP_LENGTH);
+	int n = UDP_RepDe(Sck, ipRemitent, &portUDPloc, SeqBytes, TOTAL_LENGHT_MESSAGE);
 	if( n ==-1) printf(" error de rebre el paquet AR \n");
 	if(strcmp(SeqBytes,"AR0") == 0){
 		return 1;
 	}
-
-	return -1;
+    else if(strcmp(SeqBytes, "AR1") == 0){
+        return -2;
+    }
+    else{
+        return -1;
+    }
 }
 
 
 int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc){
 
 
-	char SeqBytes[204];
+	char SeqBytes[TOTAL_LENGHT_MESSAGE];
 
 	strcpy(SeqBytes, "D");
 	strcat(SeqBytes, usuari);
@@ -521,41 +544,53 @@ int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int 
 		printf(" error de enviar peticio de desregistre al server \n");
 		return -1;
 	}
-
-
-
-	char IPnode[16];
+    bzero(SeqBytes, MAX_MESSAGE_LENGHT);
+	char IPnode[MAX_IP_LENGTH];
+    bzero(IPnode, MAX_IP_LENGTH);
 	int portNode;
 
-	int n = UDP_RepDe(Sck, IPnode, &portNode, SeqBytes, 204);
-	SeqBytes[n] = '\0';
+	int n = UDP_RepDe(Sck, IPnode, &portNode, SeqBytes, TOTAL_LENGHT_MESSAGE);
 	if( n ==-1) printf(" error de rebre el paquet AR \n");
 	if(strcmp(SeqBytes,"AD0") == 0){ // s'ha desresgistrat correctament
 		return 1;
 	}
-
-	return -1;
+    else if(strcmp(SeqBytes, "AD1") == 0){
+        return -2;
+    }
+    else{
+        return -1;
+    }
 }
 
 
-int LUMI_PeticioLocalitzacio(int Sck, const char *preguntador,const char *preguntat,const char *IPloc, int portUDPloc ,char *IPTCP, int *portTCP){
+int LUMI_PeticioLocalitzacio(int Sck, const char *MI_preguntador,const char *MI_preguntat, int portUDPloc){
 
-	char SeqBytes[204];
+	char SeqBytes[TOTAL_LENGHT_MESSAGE];
 
 	strcpy(SeqBytes, "L");
-	strcat(SeqBytes, preguntador);
+	strcat(SeqBytes, MI_preguntador);
 	strcat(SeqBytes, "#"); // separador
-	strcat(SeqBytes, preguntat);
+	strcat(SeqBytes, MI_preguntat);
 
-	int Byteenviats =  UDP_EnviaA(Sck,IPloc,portUDPloc,SeqBytes,strlen(SeqBytes));
+    char ipServ[MAX_IP_LENGTH];
+    char dns[MAX_LINIA];
+    bzero(dns, MAX_LINIA);
+    bzero(ipServ, MAX_IP_LENGTH);
+
+    DnsDeMi(MI_preguntador, dns);
+    ResolDNSaIP(dns, ipServ);
+
+    printf("%s -> %s \n", dns, ipServ);
+
+	int Byteenviats =  UDP_EnviaA(Sck,ipServ,portUDPloc,SeqBytes,strlen(SeqBytes));
 	if(Byteenviats == -1 ){
 		printf(" error de enviar peticio de localitzacio al server \n");
 		return -1;
 	}
+    return 0;
 }
 
 // FUNCTIONS REGISTRE
-
 
 struct Registre create (char* _username){
     struct Registre r;
@@ -617,9 +652,6 @@ int equals(struct Registre * r1, struct Registre * r2){
 }
 
 // FUNCTIONS DataSet
-
-
-
 
 /**
  * Implementacions per l'estructura DataSet
@@ -686,7 +718,8 @@ int updateRegistre(struct DataSet * ds, struct Registre *r){
     }
     else{
         strcpy(ds->data[posRegistre].ip, r->ip);
-        ds->data[posRegistre].port = ds->data[posRegistre].port;
+        ds->data[posRegistre].port = r->port;
+        ds->data[posRegistre].online = r->online;
     }
 }
 

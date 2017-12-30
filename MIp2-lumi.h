@@ -22,7 +22,9 @@
 //#include "Registre.h"
 //#include "DataSet.h"
 
-#define MAX_MESSAGE_LENGHT  200
+#define MAX_MESSAGE_LENGHT   200
+#define TOTAL_LENGHT_MESSAGE 204
+#define MAX_IP_LENGTH        16
 
 /**
  * Struct de registre de la taula que desa els usuaris.
@@ -33,7 +35,7 @@ struct Registre {
     // Camps que ha de tenir l'struct de registre
     char username[50]; // Nom d'usuari
     int  port;         // port UDP associat al nom d'usuari
-    char ip[16];       // Ip associada a l'usuari.
+    char ip[MAX_IP_LENGTH];       // Ip associada a l'usuari.
     int  online;       // Estipula si el registre, és a dir l'usuari està online.
 };
 
@@ -89,11 +91,12 @@ int LUMI_inicialitza_servidor(struct DataSet * d, char * filename,  char * ip, i
 int LUMI_start(int socket, struct DataSet * d);
 int LUMI_processa(int sck, struct DataSet * d);
 int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, int portRem, int online);
-int LUMI_acceptaRegistre();
+int LUMI_Localitza(char * rebut, int longitud, struct DataSet * d);
+//int LUMI_acceptaRegistre();
 
 
 void LUMI_crea_resposta_registre(char * resposta, char * tipusResposta, int valorResposta);
 int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc);
 int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc);
 int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc);
-int LUMI_PeticioLocalitzacio(int Sck, const char *preguntador,const char *preguntat,const char *IPloc, int portUDPloc ,char *IPTCP, int *portTCP);
+int LUMI_PeticioLocalitzacio(int Sck, const char *MI_preguntador,const char *MI_preguntat, int portUDPloc);
