@@ -36,7 +36,7 @@ int UDP_Rep(int Sck, char *SeqBytes, int LongSeqBytes);
 int UDP_TrobaAdrSockRem(int Sck, char *IPrem, int *portUDPrem);
 int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temps);
 int ResolDNSaIP(const char *NomDNS, char *IP);
-void DnsDeMi(const char *direccio, char * dns);
+void UsuariIDnsDeMi(const char *direccio, char * dns, char * username);
 int Log_CreaFitx(const char *NomFitxLog);
 int Log_Escriu(int FitxLog, const char *MissLog);
 int Log_TancaFitx(int FitxLog);
@@ -162,7 +162,7 @@ int LUMI_processa(int sck, struct DataSet * d){
 		}
 		else if(missatge[0] == 'L'){
 			printf("%s -> %i bytes\n","Petició de localització.", longitud);
-            int resultatLocalitzacio = LUMI_localitza(missatge, longitud, d);
+            int resultatLocalitzacio = LUMI_localitza(sck, missatge, longitud, d);
 
 		}
 	}
@@ -191,10 +191,98 @@ int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, 
     return 0;
 }
 
-int LUMI_localitza(char * rebut, int longitud, struct DataSet * d){
+int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
     // S'extreuen els camps del missatge rebut.
-    char * direccions = strncpy(rebut, rebut + 1, longitud);
-    printf("%s\n", direccions);
+    char direccions[MAX_LINIA];
+    bzero(direccions, MAX_LINIA);
+    strncpy(direccions, rebut + 1, longitud);
+
+    char nickFrom[MAX_LINIA];
+    char nickTo[MAX_LINIA];
+    char dnsFrom[MAX_LINIA];
+    char dnsTo[MAX_LINIA];
+
+    // Extraiem els camps de les direccions
+    sscanf(direccions, "%[^'@']@%[^'#']#%[^'@']@%s", nickFrom, dnsFrom, nickTo, dnsTo);
+
+    printf("nick from : %s\n", nickFrom);
+    printf("dns from : %s\n", dnsFrom);
+    printf("nick to : %s\n", nickTo);
+    printf("dns to : %s\n", dnsTo);
+
+    // TODO : S'ha d'arreglar i pensar be el tema de si es mi o no i si s'ha d'enviar a un client o aun altre servidor.
+
+    if(strcmp(dnsTo, d->domini) == 0){
+        // Està dins del domini del servidor
+        printf("%s\n", "Està dins del servidor");
+
+        // S'ha de comprovar si està en línia o si està registrat.
+        struct Registre r = create(nickTo);
+        existeixRegistre(d, &r);
+        if(r.online != -1){
+            if(r.online == 0){
+                // El registre existeix peró no està connectat, contesta el servidor.
+                // Retorna AL1
+                int resultatAccio = UDP_EnviaA(sck, r.ip, r.port, rebut, longitud);
+                if(resultatAccio < 0){
+                    // TODO : Error
+                    printf("Hi ha hagut un error al transmetre la localització al client des del servidor\n");
+                }
+            }
+            else{
+                // El registre existeix i està connectat, se li ha de demanar ip i port TCP
+                printf("S'ha trobat el registre\n");
+                // Generem el socket per parlar amb el client
+                //int sck = UDP_CreaSock(IP_AUTO, PORT_AUTO);
+                // Derivem la resposta al client.
+                int resultatAccio = UDP_EnviaA(sck, r.ip, r.port, rebut, longitud);
+                if(resultatAccio < 0){
+                    // TODO : Error
+                    printf("Hi ha hagut un error al transmetre la localització al client des del servidor\n");
+                }
+            }
+        }
+        else{
+            // El registre no existeix, contesta el servidor
+            printf("No s'ha trobat el registre\n");
+            LUMI_RespostaLocalitzacio(sck, &nickFrom, &dnsFrom, 2, 1);
+        }
+    }
+    else{
+        // No està dins del domini del servidor
+        printf("%s\n", "No està dins del servidor");
+        LUMI_EnviaAMI(sck, nickTo, dnsTo, rebut);
+    }
+}
+
+int LUMI_RespostaLocalitzacio(int sck, char * nickTo, char * dnsTo, int codi){
+    char codiStr[3];
+    sprintf(codiStr, "AL%d", codi);
+    char missatge[TOTAL_LENGHT_MESSAGE];
+    bzero(missatge, TOTAL_LENGHT_MESSAGE);
+    strcat(missatge, codiStr);
+    strcat(missatge, nickTo);
+    strcat(missatge, "@");
+    strcat(missatge, dnsTo);
+
+    LUMI_EnviaAMI(sck, nickTo, dnsTo, missatge);
+
+
+}
+
+int LUMI_EnviaAMI(int sck, char * usuari, char * dns, char * missatge){
+
+    char ipServ[MAX_IP_LENGTH];
+    bzero(ipServ, MAX_IP_LENGTH);
+    ResolDNSaIP(dns, ipServ);
+
+	int Byteenviats =  UDP_EnviaA(sck,ipServ,PORT_SERVER,missatge,strlen(missatge));
+	if(Byteenviats == -1 ){
+		printf(" error de enviar peticio de localitzacio al server \n");
+		return -1;
+	}
+    UDP_TancaSock(sck);
+    return 0;
 }
 
 /* Definicio de funcions INTERNES, és a dir, d'aquelles que es faran      */
@@ -459,8 +547,7 @@ int ResolDNSaIP(const char *NomDNS, char *IP)
  * Donada una direcció MI extreu el nom dns.
  * dns conté la part del dns de la direcció MI de direcció.
  */
-void DnsDeMi(const char *direccio, char * dns){
-    char username[200];
+void UsuariIDnsDeMi(const char *direccio, char * dns, char * username){
     sscanf(direccio, "%[^'@']@%s", username, dns);
 }
 
@@ -572,23 +659,16 @@ int LUMI_PeticioLocalitzacio(int Sck, const char *MI_preguntador,const char *MI_
 	strcat(SeqBytes, "#"); // separador
 	strcat(SeqBytes, MI_preguntat);
 
-    char ipServ[MAX_IP_LENGTH];
     char dns[MAX_LINIA];
+    char usuari[MAX_LINIA];
     bzero(dns, MAX_LINIA);
-    bzero(ipServ, MAX_IP_LENGTH);
+    bzero(usuari, MAX_LINIA);
 
-    DnsDeMi(MI_preguntador, dns);
-    ResolDNSaIP(dns, ipServ);
-
-    printf("%s -> %s \n", dns, ipServ);
-
-	int Byteenviats =  UDP_EnviaA(Sck,ipServ,portUDPloc,SeqBytes,strlen(SeqBytes));
-	if(Byteenviats == -1 ){
-		printf(" error de enviar peticio de localitzacio al server \n");
-		return -1;
-	}
-    return 0;
+    UsuariIDnsDeMi(MI_preguntador, dns, usuari);
+    LUMI_EnviaAMI(Sck, usuari, dns, SeqBytes);
 }
+
+
 
 // FUNCTIONS REGISTRE
 
@@ -611,6 +691,13 @@ void ini(struct Registre * r, char* _username, int _port, char* _ip, int _online
     strcpy(r->ip, _ip);
     r->online = _online;
     //return r;
+}
+
+void copyRegistre(struct Registre * copy, struct Registre * original){
+    strcpy(copy->username, original->username);
+    copy->port = original->port;
+    strcpy(copy->ip, original->ip);
+    copy->online = original->online;
 }
 
 /**
@@ -695,6 +782,16 @@ void insertRegistre(struct DataSet * ds, struct Registre *r){
     ds->nClients++;
 }
 
+int existeixRegistre(struct DataSet * ds, struct Registre * r){
+    int posRegistre = getPosicio(ds, r);
+    if(posRegistre >= 0){
+        copyRegistre(r, &ds->data[posRegistre]);
+    }
+    else{
+        r->online = -1;
+    }
+}
+
 int deleteRegistre(struct DataSet * ds, struct Registre *r){
     int posRegistre = getPosicio(ds, r);
 
@@ -717,9 +814,7 @@ int updateRegistre(struct DataSet * ds, struct Registre *r){
         return -1;
     }
     else{
-        strcpy(ds->data[posRegistre].ip, r->ip);
-        ds->data[posRegistre].port = r->port;
-        ds->data[posRegistre].online = r->online;
+        copyRegistre(&ds->data[posRegistre], r);
     }
 }
 

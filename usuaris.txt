@@ -1,4 +1,4 @@
-domini.com
+b.com
 usuari_1
 usuari_2
 usuari_3

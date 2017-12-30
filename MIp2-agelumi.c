@@ -18,7 +18,7 @@
 #define IP_DEFAULT      "0.0.0.0"       // Ip per defecte que utilitza el servidor per escoltar peticions UDP.
 #define PORT_DEFAULT    0            // Port on el servidor escoltarà peticions UDP per defecte.
 #define MAX_LINIA		200
-
+//
 //#define IP_SERVER      "192.168.15.5"
 #define IP_SERVER      "0.0.0.0"
 #define PORT_SERVER    8765
@@ -54,8 +54,10 @@ int main(int argc,char *argv[])
 	resultatAccio=LUMI_PeticioRegistre(SckLUMI,username,IP_SERVER,PORT_SERVER);
 	if(resultatAccio==-1) printf("\n...error fent peticio registre \n");
 
-	char preguntador[MAX_LINIA]; strcpy(preguntador, "usuari_1@a.com");
-	char preguntat[MAX_LINIA]; strcpy(preguntat, "usuari_2@b.com");
+	char preguntador[MAX_LINIA];
+	strcpy(preguntador, "usuari_1@a.com");
+	char preguntat[MAX_LINIA];
+	strcpy(preguntat, "usuari_2@b.com");
 
 	resultatAccio = LUMI_PeticioLocalitzacio(SckLUMI, preguntador, preguntat, PORT_SERVER);
 

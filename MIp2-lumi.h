@@ -25,6 +25,9 @@
 #define MAX_MESSAGE_LENGHT   200
 #define TOTAL_LENGHT_MESSAGE 204
 #define MAX_IP_LENGTH        16
+#define MAX_LINIA		     200
+#define IP_AUTO              "0.0.0.0"
+#define PORT_AUTO            0
 
 /**
  * Struct de registre de la taula que desa els usuaris.
@@ -72,6 +75,13 @@ int updateRegistre(struct DataSet * ds, struct Registre * r);
 // Retorna la posició de la taula on es troba el registre r
 // o bé un registre n que té el mateix nom que r, o un registre n que té la mateixa ip i port que r.
 int getPosicio(struct DataSet * ds, struct Registre * r);
+// Mira si un registre existeix, si existeix r és el registre
+// Si no existeix r->online és -1
+int existeixRegistre(struct DataSet * ds, struct Registre * r);
+// copy és una còpia de original, copy s'espera que estigui buit i només inicialitzat.
+void copyRegistre(struct Registre * copy, struct Registre * original);
+// Retorna 1 si està connectat, 0 si està desconnectat
+int isOnline(struct Registre * r);
 
 int llegirUsuaris(struct DataSet * ds, char * filename);
 
@@ -91,7 +101,10 @@ int LUMI_inicialitza_servidor(struct DataSet * d, char * filename,  char * ip, i
 int LUMI_start(int socket, struct DataSet * d);
 int LUMI_processa(int sck, struct DataSet * d);
 int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, int portRem, int online);
-int LUMI_Localitza(char * rebut, int longitud, struct DataSet * d);
+int LUMI_Localitza(int sck, char * rebut, int longitud, struct DataSet * d);
+int LUMI_RespostaLocalitzacio(int sck, char * nickTo, char * dnsTo, int codi);
+int LUMI_EnviaAMI(int sck, char * usuari, char * dns, char * missatge);
+
 //int LUMI_acceptaRegistre();
 
 
