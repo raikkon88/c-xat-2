@@ -1,3 +1,5 @@
 #!/bin/bash
+
+git pull https://raikkon88:bit/bucket/000@bitbucket.org/marcfeng/xat2.git
 gcc -o client MIp2-agelumi.c MIp2-lumi.c
 gcc -o server MIp2-nodelumi.c MIp2-lumi.c
