@@ -750,7 +750,89 @@ int LUMI_PeticioLocalitzacio(int Sck, const char *MI_preguntador,const char *MI_
 }
 
 
+int LUMI_ProcessaClient(int sck){
 
+    char ipRem[MAX_IP_LENGTH] = "";
+	int  portRem = 0;
+	char missatge[MAX_MESSAGE_LENGHT];
+	bzero(missatge, MAX_MESSAGE_LENGHT);
+
+    int longitud = UDP_RepDe(sck, ipRem, &portRem, missatge, MAX_MESSAGE_LENGHT);
+
+    int resultatAccio = 0;
+    if(longitud < 0){
+        return -1;
+    }
+    else{
+        if(missatge[0] == 'A'){
+            if(missatge[1] == 'R'){ // Resposta de registre
+                if(missatge[2] == 0){
+                    // TODO :  Registrat correctament, escriure log
+                    // Escriure per pantalla també.
+                }
+                else if(missatge[2] == 1){
+                    // TODO :  Registrat incorrectament, escriure log
+                    // Escriure per pantalla també.
+                }
+                else{
+                    // TODO : Missatge arrivat erroni, escriure log
+                    // Escriure per pantalla també.
+                }
+            }
+            else if(missatge[1] == 'D'){ // Resposta de desregistre
+                if(missatge[2] == 0){
+                    // TODO :  Desregistrat correctament, escriure log
+                    // Escriure per pantalla també.
+                }
+                else if(missatge[2] == 1){
+                    // TODO :  Desregistrat incorrectament, escriure log
+                    // Escriure per pantalla també.
+                }
+                else{
+                    // TODO : Missatge arrivat erroni, escriure log
+                    // Escriure per pantalla també.
+                }
+            }
+            else if(missatge[1] == 'L'){ // Resposta de localització
+                if(missatge[2] == 0){
+                    // Client amb el que es vol parlar està en línia, ha arrivat un missatge com el següent :
+                    //      AL0preguntador@dnsPreguntador#IP#PORT_TCP
+                    // S'ha d'extreure IP i PORT_TCP
+                    // S'ha de generar un socket TCP amb el programa MI i s'ha de connectar amb el client
+                }
+                else if(missatge[2] == 1){
+                    // TODO : Localitzat incorrectament, escriure log
+                    // i anunciar a programa que no es pot parlar per que el client està offline
+                }
+                else if(missatge[2] == 2){
+                    // TODO : Localitzat incorrectament, escriure log
+                    // i anunciar a programa que no es pot parlar per que el client no existeix
+                }
+                else if(missatge[2] == 3){
+                    // TODO : Localitzat incorrectament, escriure log
+                    // i anunciar a programa que no es pot parlar per que el client ja està ocupat
+                }
+                else{
+                    // TODO : Missatge arrivat erroni, escriure log
+                }
+            }
+        }
+        else if(missatge[0] == 'L') { // Missatge de localització, pregunten per mi.
+            // S'ha de retornar la direcció ip i el port TCP en un missatge amb el format :
+            // Si ja estic parlant amb un altre client :
+                // S'ha de retornar el missatge : AL3preguntador@dnsPreguntador
+            // Si estic lliure :
+                // S'ha de retornar el missatge : AL0preguntador@dnsPreguntador#IP#PORT_TCP
+
+            // NOTA :: Per retornar el missatge pots fer servir la funció LUMI_EnviaAMI
+            // Passant-li socket, preguntador, dnsPreguntador, missatge
+        }
+        else{
+            // TODO : Escriure log, s'ha de descartar el missatge
+        }
+    }
+
+}
 // FUNCTIONS REGISTRE
 
 struct Registre create (char* _username){

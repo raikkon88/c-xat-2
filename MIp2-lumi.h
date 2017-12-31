@@ -121,4 +121,4 @@ int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc);
 int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc);
 int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc);
 int LUMI_PeticioLocalitzacio(int Sck, const char *MI_preguntador,const char *MI_preguntat, int portUDPloc);
-int LUMI_ProcessaClient(int sck, char * rebut, int longitud);
+int LUMI_ProcessaClient(int sck);
