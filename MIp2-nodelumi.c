@@ -38,5 +38,7 @@ int main(int argc,char *argv[])
     if( resultatAccio < 0){
         printf("ERROR -> %s\n","Error en el processament de peticions.");
     }
+    //TODO : Falta buidar el buffer de teclat si s'ha acabat.
+
 
 }

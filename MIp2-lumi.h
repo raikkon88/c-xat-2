@@ -28,6 +28,12 @@
 #define MAX_LINIA		     200
 #define IP_AUTO              "0.0.0.0"
 #define PORT_AUTO            0
+#define AL0                  0
+#define AL1                  1
+#define AL2                  2
+#define AL3                  3
+#define DEFAULT_PORT_SERVER  8765
+
 
 /**
  * Struct de registre de la taula que desa els usuaris.
@@ -88,6 +94,7 @@ int llegirUsuaris(struct DataSet * ds, char * filename);
 int escriureUsuaris(struct DataSet * ds, char * filename);
 
 
+
 /* Declaració de funcions externes de lumi.c, és a dir, d'aquelles que es */
 /* faran servir en un altre fitxer extern, p.e., MIp2-p2p.c,              */
 /* MIp2-nodelumi.c, o MIp2-agelumic.c. El fitxer extern farà un #include  */
@@ -102,14 +109,16 @@ int LUMI_start(int socket, struct DataSet * d);
 int LUMI_processa(int sck, struct DataSet * d);
 int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, int portRem, int online);
 int LUMI_Localitza(int sck, char * rebut, int longitud, struct DataSet * d);
-int LUMI_RespostaLocalitzacio(int sck, char * nickTo, char * dnsTo, int codi);
+int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struct DataSet * d);
+int LUMI_GeneraRespostaLocalitzacio(int codi, char* contingut, char * resposta);
 int LUMI_EnviaAMI(int sck, char * usuari, char * dns, char * missatge);
-
-//int LUMI_acceptaRegistre();
-
-
+int LUMI_ContestaClientMateixDomini(int sck, char * nickFrom, int codiResposta, struct DataSet * d);
+int LUMI_ContestaServidor(int sck, char * nickFrom, char * dnsFrom, int codi);
 void LUMI_crea_resposta_registre(char * resposta, char * tipusResposta, int valorResposta);
+
+
 int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc);
 int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc);
 int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc);
 int LUMI_PeticioLocalitzacio(int Sck, const char *MI_preguntador,const char *MI_preguntat, int portUDPloc);
+int LUMI_ProcessaClient(int sck, char * rebut, int longitud);

@@ -37,6 +37,7 @@ int UDP_TrobaAdrSockRem(int Sck, char *IPrem, int *portUDPrem);
 int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temps);
 int ResolDNSaIP(const char *NomDNS, char *IP);
 void UsuariIDnsDeMi(const char *direccio, char * dns, char * username);
+void MontaAdrecaMi(char * direccio, char * dns, char * username);
 int Log_CreaFitx(const char *NomFitxLog);
 int Log_Escriu(int FitxLog, const char *MissLog);
 int Log_TancaFitx(int FitxLog);
@@ -113,6 +114,7 @@ int LUMI_start(int socket, struct DataSet * d){
 			break;
 		}
 	}
+    UDP_TancaSock(socket);
 	return 0;
 }
 
@@ -131,6 +133,8 @@ int LUMI_processa(int sck, struct DataSet * d){
 	bzero(missatge, MAX_MESSAGE_LENGHT);
 	int longitud = UDP_RepDe(sck, ipRem, &portRem, missatge, MAX_MESSAGE_LENGHT);
 
+    int resultatAccio = 0;
+
 	if(longitud < 0){
 		return -1;
 	}
@@ -142,11 +146,12 @@ int LUMI_processa(int sck, struct DataSet * d){
             char resposta[MIDA_RESPOSTA_REGISTRE] = "";
             LUMI_crea_resposta_registre(resposta, "R", resultatRegistre);
             printf("Resposta : %s\n", resposta);
-			int resultatResposta = UDP_EnviaA(sck, ipRem, portRem, resposta, MIDA_RESPOSTA_REGISTRE);
-            if(resultatResposta < 0){
-                // Escriure Log
-                printf("%s\n", "Error al enviar la resposta del registre.");
-            }
+			resultatAccio = UDP_EnviaA(sck, ipRem, portRem, resposta, MIDA_RESPOSTA_REGISTRE);
+            // TODO: Escriure log
+            // if(resultatResposta < 0){
+            //     // Escriure Log
+            //     printf("%s\n", "Error al enviar la resposta del registre.");
+            // }
 		}
 		else if(missatge[0] == 'D'){
 			printf("%s -> %i bytes\n", "Petició de desregistre", longitud);
@@ -154,18 +159,67 @@ int LUMI_processa(int sck, struct DataSet * d){
             char resposta[MIDA_RESPOSTA_REGISTRE]="";
             LUMI_crea_resposta_registre(resposta, "D", resultatRegistre);
             printf("Resposta : %s\n", resposta);
-			int resultatResposta = UDP_EnviaA(sck, ipRem, portRem, resposta, MIDA_RESPOSTA_REGISTRE);
-            if(resultatResposta < 0){
-                // Escriure Log
-                printf("%s\n", "Error al enviar la resposta del desregistre.");
-            }
+			resultatAccio = UDP_EnviaA(sck, ipRem, portRem, resposta, MIDA_RESPOSTA_REGISTRE);
+            // TODO : Escriure Log
+            // if(resultatResposta < 0){
+            //     // Escriure Log
+            //     printf("%s\n", "Error al enviar la resposta del desregistre.");
+            // }
 		}
 		else if(missatge[0] == 'L'){
 			printf("%s -> %i bytes\n","Petició de localització.", longitud);
             int resultatLocalitzacio = LUMI_localitza(sck, missatge, longitud, d);
+            // TODO : Escriure Log.
 
 		}
+        else if(missatge[0] == 'A'){
+            if(missatge[1] == 'L'){
+                // En aquest cas ens està arrivant o bé una resposta d'un client o una resposta d'un servidor.
+                int resultatResposta = LUMI_ProcessaRespostaLocalitzacio(sck, missatge, longitud, d);
+                // TODO : Escriure Log.
+            }
+            else{
+                // TODO :  Escriure Log,  El missatge rebut és incorrecte i s'ha descartat
+            }
+        }
+        else {
+            // TODO : Escriure log, el missatge rebut és incorrecte i s'ha descartat
+        }
 	}
+}
+
+int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struct DataSet * d){
+
+    char direccio[MAX_LINIA];
+    bzero(direccio, MAX_LINIA);
+    // Treiem el codi de resposta i el missatge i ens quedem la direcció
+    strncpy(direccio, rebut + 3, longitud);
+
+    char nickTo[MAX_LINIA];
+    char dnsTo[MAX_LINIA];
+
+    // Extraiem els camps de les direccions
+    sscanf(direccio, "%[^'@']@%s",nickTo, dnsTo);
+
+    printf("nick to : %s\n", nickTo);
+    printf("dns to : %s\n", dnsTo);
+
+    int resultatAccio = 0;
+    if(strcpy(dnsTo, d->domini) == 0){ // El missatge va dirigit a mi
+        struct Registre desti = create(nickTo);
+        existeixRegistre(d, &desti);
+        if(desti.online != -1) { // El registre existeix
+            resultatAccio = UDP_EnviaA(sck, desti.ip, desti.port, rebut, longitud);
+            // TODO : Escriure Log
+        }
+        else {
+            // TODO : Escriure log, el registre no existeix.
+        }
+    }
+    else { // El missatge s'ha de reenviar a un altre servidor.
+        resultatAccio = LUMI_EnviaAMI(sck, nickTo, dnsTo, rebut);
+        // TODO : Escriure Log.
+    }
 }
 
 /**
@@ -210,71 +264,92 @@ int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
     printf("nick to : %s\n", nickTo);
     printf("dns to : %s\n", dnsTo);
 
-    // TODO : S'ha d'arreglar i pensar be el tema de si es mi o no i si s'ha d'enviar a un client o aun altre servidor.
-    if(strcmp(dnsFrom, dnsTo) == 0){
-        // Vol dir que el missatge no ha de sortir del servidor cap a un altre servidor.
-    }
-    else{
-        // Pot ser que el servidor sigui el to o el from.
-    }
+    int resultatAccio = 0;
 
- // REVISAR:::
+    // Sóc el domini destí
     if(strcmp(dnsTo, d->domini) == 0){
-        // Està dins del domini del servidor
-        printf("%s\n", "Està dins del servidor");
+        // Primer de tot comprovem que el client estigui al nostre domini (validació)
+        struct Registre r = create(nickTo); // Genero un registre flag per fer la cerca
+        existeixRegistre(d, &r); // Si no existeix r->online és -1
 
-        // S'ha de comprovar si està en línia o si està registrat.
-        struct Registre r = create(nickTo);
-        existeixRegistre(d, &r);
-        if(r.online != -1){
-            if(r.online == 0){
-                // El registre existeix peró no està connectat, contesta el servidor.
-                // Retorna AL1
-                int resultatAccio = UDP_EnviaA(sck, r.ip, r.port, rebut, longitud);
-                if(resultatAccio < 0){
-                    // TODO : Error
-                    printf("Hi ha hagut un error al transmetre la localització al client des del servidor\n");
+        if(r.online != -1){ // Si el client existeix :
+            // Mirem si està on line o si no.
+            if(r.online == 1){ // Si està onLine (Si està ocupat o no ho gestiona el client)
+                // Li diem al client b que contesti al client a (BRIDGE)
+                resultatAccio = UDP_EnviaA(sck, r.ip, r.port, rebut, longitud);
+                // TODO : Escriure Log
+            }
+            else { // Si no està online :
+                if(strcmp(dnsFrom, dnsTo) == 0){
+                    // El servidor pot gestionar la resposta directa cap al client.
+                    resultatAccio = LUMI_ContestaClientMateixDomini(sck, nickFrom, AL1, d);
+                    // TODO : Escriure Log
                 }
+                else{
+                    // Contesta al servidor anterior
+                    resultatAccio = LUMI_ContestaServidor(sck, nickFrom, dnsFrom, AL1);
+                    // TODO : Escriure Log
+                }
+            }
+        }
+        else { // Si el client no existeix
+            if(strcmp(dnsFrom, dnsTo) == 0){ // (AL2)
+                // El servidor pot gestionar la resposta directa cap al client.
+                resultatAccio = LUMI_ContestaClientMateixDomini(sck, nickFrom, AL2, d);
+                // TODO : Escriure Log
             }
             else{
-                // El registre existeix i està connectat, se li ha de demanar ip i port TCP
-                printf("S'ha trobat el registre\n");
-                // Generem el socket per parlar amb el client
-                //int sck = UDP_CreaSock(IP_AUTO, PORT_AUTO);
-                // Derivem la resposta al client.
-                int resultatAccio = UDP_EnviaA(sck, r.ip, r.port, rebut, longitud);
-                if(resultatAccio < 0){
-                    // TODO : Error
-                    printf("Hi ha hagut un error al transmetre la localització al client des del servidor\n");
-                }
+                // Contesta al servidor anterior
+                resultatAccio = LUMI_ContestaServidor(sck, nickFrom, dnsFrom, AL2);
+                // TODO : Escriure Log
             }
         }
-        else{
-            // El registre no existeix, contesta el servidor
-            printf("No s'ha trobat el registre\n");
-            LUMI_RespostaLocalitzacio(sck, &nickFrom, &dnsFrom, 2);
-        }
     }
-    else{
-        // No està dins del domini del servidor
-        printf("%s\n", "No està dins del servidor");
-        LUMI_EnviaAMI(sck, nickTo, dnsTo, rebut);
+    else { // No sóc el domini destí (Bridge)
+        resultatAccio = LUMI_EnviaAMI(sck, nickTo, dnsTo, rebut);
+        // TODO : Escriure Log
     }
 }
 
-int LUMI_RespostaLocalitzacio(int sck, char * nickTo, char * dnsTo, int codi){
+int LUMI_ContestaServidor(int sck, char * nickFrom, char * dnsFrom, int codi){
+    char direccio[MAX_LINIA];
+    MontaAdrecaMi(direccio, nickFrom, dnsFrom);
+    char resposta[MAX_LINIA];
+    LUMI_GeneraRespostaLocalitzacio(codi, direccio, resposta);
+    return LUMI_EnviaAMI(sck, nickFrom, dnsFrom, resposta);
+}
+
+int LUMI_ContestaClientMateixDomini(int sck, char * nickFrom, int codiResposta, struct DataSet * d){
+    // Cerco la ip del registre que m'ha contactat
+    struct Registre origen = create(nickFrom);
+    existeixRegistre(d, &origen);
+    // Miro que no sigui un fake el nick
+    if(origen.online != -1){
+        // Contestem al client a que no es pot realitzar la connexió (AL3)
+        char resposta[TOTAL_LENGHT_MESSAGE];
+        LUMI_GeneraRespostaLocalitzacio(codiResposta, "", resposta);
+        return UDP_EnviaA(sck, origen.ip, origen.port, resposta, strlen(resposta));
+    }
+    else{
+        // TODO :  MISSATGE DESCARTAT... es pot escriure al log.
+        // El que m'ha enviat el missatge no existeix i és un troll!
+    }
+}
+
+int LUMI_GeneraRespostaLocalitzacio(int codi, char* contingut, char * resposta){
     char codiStr[3];
     sprintf(codiStr, "AL%d", codi);
-    char missatge[TOTAL_LENGHT_MESSAGE];
-    bzero(missatge, TOTAL_LENGHT_MESSAGE);
-    strcat(missatge, codiStr);
-    strcat(missatge, nickTo);
-    strcat(missatge, "@");
-    strcat(missatge, dnsTo);
+    bzero(resposta, TOTAL_LENGHT_MESSAGE);
+    strcat(resposta, codiStr);
+    strcat(resposta, contingut);
+    return 0;
+}
 
-    LUMI_EnviaAMI(sck, nickTo, dnsTo, missatge);
-
-
+void MontaAdrecaMi(char * direccio, char * dns, char * username){
+    bzero(direccio, MAX_LINIA);
+    strcpy(direccio, username);
+    strcat(direccio, "@");
+    strcat(direccio, dns);
 }
 
 int LUMI_EnviaAMI(int sck, char * usuari, char * dns, char * missatge){
@@ -283,12 +358,11 @@ int LUMI_EnviaAMI(int sck, char * usuari, char * dns, char * missatge){
     bzero(ipServ, MAX_IP_LENGTH);
     ResolDNSaIP(dns, ipServ);
 
-	int Byteenviats =  UDP_EnviaA(sck,ipServ,PORT_SERVER,missatge,strlen(missatge));
+	int Byteenviats =  UDP_EnviaA(sck,ipServ,DEFAULT_PORT_SERVER,missatge,strlen(missatge));
 	if(Byteenviats == -1 ){
 		printf(" error de enviar peticio de localitzacio al server \n");
 		return -1;
 	}
-    UDP_TancaSock(sck);
     return 0;
 }
 
