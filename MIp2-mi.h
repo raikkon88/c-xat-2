@@ -9,7 +9,7 @@
 
 
 /* Declaració de funcions externes de mi.c, és a dir, d'aquelles que es   */
-/* faran servir en un altre fitxer extern, p.e., MIp2-p2p.c; el fitxer    */
+/* faran servir en un altre fitxer extern, p.e., MIp1-p2p.c; el fitxer    */
 /* extern farà un #include del fitxer .h a l'inici, i així les funcions   */
 /* seran conegudes en ell.                                                */
 /* En termes de capes de l'aplicació, aquest conjunt de funcions externes */
@@ -23,3 +23,4 @@ int MI_EnviaLinia(int SckConvMI, const char *Linia);
 int MI_RepLinia(int SckConvMI, char *Linia);
 int MI_AcabaConv(int SckConvMI);
 int MI_AcabaEscPetiRemConv(int SckEscMI);
+void MostraError(const char *text);
