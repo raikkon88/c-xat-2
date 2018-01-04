@@ -18,7 +18,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include "MIp1-mi.h"
+#include "MIp2-mi.h"
 
 /* Definició de constants, p.e., #define MAX_LINIA 150                    */
 #define ALL_INTERFACES 			"0.0.0.0"
@@ -188,7 +188,7 @@ int MI_AcceptaConv(int SckEscMI, char *IPrem, int *portTCPrem, char *IPloc, int 
  * Retorna el port assignat o un número menor a 0 si va malament.
  * ipLocal tindrà la ip assignada en cas que tot vagi bé.
  */
-int MI_DescobreixIpIPortDinamic(int sck, char * ipLocal){
+int MI_getIpiPortDeSocket(int sck, char * ipLocal, int * port){
 
     struct sockaddr_in sin;
     int addrlen = sizeof(sin);
@@ -197,7 +197,10 @@ int MI_DescobreixIpIPortDinamic(int sck, char * ipLocal){
        sin.sin_family == AF_INET &&
        addrlen == sizeof(sin))
     {
-        local_port = (int)ntohs(sin.sin_port);
+        *port = (int)ntohs(sin.sin_port);
+    }
+    else{
+        return -1;
     }
 
     //printf("%i\n", (int) portLocal);
@@ -211,10 +214,9 @@ int MI_DescobreixIpIPortDinamic(int sck, char * ipLocal){
     if(fgets(ipLocal, 1024, fd) == NULL) return -1;
     ipLocal[strlen(ipLocal)-1]='\0';
     int status = pclose(fd);
-
-    if(status < 0) return status;
-    else return local_port;
+    return 0;
 }
+
 
 /**
  * Extreu tots els camps del paquet que ha arrivat.
@@ -578,6 +580,14 @@ int HaArribatAlgunaCosa(const int *LlistaSck, int LongLlistaSck)
 	}
 	// Si surt del bucle vol dir que hi ha hagut un error ja que cap dels sockets ha saltat i no pot ser.
 	return -1;
+}
+
+/**
+ * Donada una direcció MI extreu el nom dns.
+ * dns conté la part del dns de la direcció MI de direcció.
+ */
+void MI_UsuariIDnsDeMi(const char *direccio, char * dns, char * username){
+    sscanf(direccio, "%[^'@']@%s", username, dns);
 }
 
 /* Escriu un missatge de text al flux d’error estàndard stderr, format    */

@@ -28,10 +28,16 @@
 #define MAX_LINIA		     200
 #define IP_AUTO              "0.0.0.0"
 #define PORT_AUTO            0
-#define AL0                  0
-#define AL1                  1
-#define AL2                  2
-#define AL3                  3
+#define REGISTRE_CORRECTE           10
+#define REGISTRE_INCORRECTE         11
+#define DESREGISTRE_CORRECTE        12
+#define DESREGISTRE_INCORRECTE      13
+#define MISSATGE_ERRONI             14
+#define LOCALITZACIO_ONLINE_LLIURE  15
+#define LOCALITZACIO_OFFLINE        16
+#define LOCALITZACIO_NO_EXISTEIX    17
+#define LOCALITZACIO_ONLINE_OCUPAT  18
+#define LOCALITZACIO_PETICIO        19
 #define DEFAULT_PORT_SERVER  8765
 
 
@@ -114,6 +120,7 @@ int LUMI_GeneraRespostaLocalitzacio(int codi, char* contingut, char * resposta);
 int LUMI_EnviaAMI(int sck, char * usuari, char * dns, char * missatge);
 int LUMI_ContestaClientMateixDomini(int sck, char * nickFrom, int codiResposta, struct DataSet * d);
 int LUMI_ContestaServidor(int sck, char * nickFrom, char * dnsFrom, int codi);
+int LUMI_getIpiPortDeSocket(int sck, char * ip, int * port);
 void LUMI_crea_resposta_registre(char * resposta, char * tipusResposta, int valorResposta);
 
 
