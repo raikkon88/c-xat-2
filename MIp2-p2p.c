@@ -25,6 +25,11 @@
 /* Definició de constants, p.e., #define MAX_LINIA 150                      */
 #define TECLAT 				0
 #define PORT_DEFECTE        0
+#define ALL_IP              "0.0.0.0"
+
+/* Defineixo la posició del sockets a la taula de sockets */
+#define SCK_TCP             1
+#define SCK_UDP             2
 
 /* Definició de màxims de longitud dels diferents tipus d'string            */
 #define MAX_BUFFER 			300
@@ -32,6 +37,7 @@
 #define MAX_IP 				16
 #define MAX_LINE			304
 #define MAX_PORT			6
+#define N_SOCKETS           3
 
 /* Definició de funcions per el programa principal                          */
 void EvalResult(int res, const int *sockets, int nSockets);
@@ -41,7 +47,7 @@ int getPort();
 int main(int argc,char *argv[])
 {
     // CONSTANTS que es poden cambiar.
-   char ipLocal[MAX_IP] = "0.0.0.0";
+   //char ALL_IP[MAX_IP] = "0.0.0.0";
 
    // Creem les linies de dades del protocol.
    char ipRemota        [MAX_IP];      // Ip on es connectarà tant per la connexió de servidor com la de client.
@@ -58,9 +64,9 @@ int main(int argc,char *argv[])
    int portLocal=0;
    int fi = 1;
 
-   int socketsEscoltant[3];
+   int socketsEscoltant[N_SOCKETS];
    int socketEscoltador;
-   int nSockets = 3;
+   //int nSockets = 3;
    int nBytes;
    int res;
    int socketActiu;
@@ -69,19 +75,26 @@ int main(int argc,char *argv[])
    printf("/* XAT DE XARXES -> Autors : Fent Lin i Marc Sánchez\n");
    printf("/*---------------------------------------------------\n");
    printf("/* Entra un nick per comunicar-te\n");
+   // S'obté el nickname.
    EvalResult(getNickname(nickname), NULL, 0);
-   socketsEscoltant[0] = TECLAT;
+   // Es configura el socket de teclat.
+   socketsEscoltant[TECLAT] = TECLAT;
+
+   // Es configura el socket UDP.
+   socketsEscoltant[SCK_UDP] = LUMI_CrearSocketClient(IP_DEFAULT, PORT_DEFECTE);
+
    while(fi != 0){
-       socketEscoltador = MI_IniciaEscPetiRemConv(PORT_DEFECTE);
-       socketsEscoltant[1] = socketEscoltador;
-       EvalResult(socketEscoltador, socketsEscoltant, nSockets); // Evaluem el resultat de l'anterior instrucció
+       // Estic escoltant per TCP
+       socketsEscoltant[SCK_TCP] = MI_IniciaEscPetiRemConv(PORT_DEFECTE);
+//= socketEscoltador;
+       EvalResult(socketEscoltador, socketsEscoltant, N_SOCKETS); // Evaluem el resultat de l'anterior instrucció
        // Obtenim el port i la ip locals assignades dinàmicament.
-       portLocal = MI_DescobreixIpIPortDinamic(socketsEscoltant[1], ipLocal);
+       portLocal = MI_DescobreixIpIPortDinamic(socketsEscoltant[SCK_TCP], ALL_IP);
        EvalResult(portLocal, socketsEscoltant, 2);
        printf("/*-------------------------------------------------------------------*/\n");
        printf("/* Informació del programa : */\n");
        printf("/*---------------------------------------------------\n");
-       printf("/* Ip configurada de manera local : %s\n",ipLocal);
+       printf("/* Ip configurada de manera local : %s\n",ALL_IP);
        printf("/* Port configurat de manera local : %i\n", portLocal);
 
        // printf("Espera que es connectin o configura un port i una ip per aquest ordre per realitzar la connexió.\n");
@@ -92,22 +105,48 @@ int main(int argc,char *argv[])
        printf("/* Opció 2 -> Entra port i ip per aquest ordre\n");
        printf("/*-------------------------------------------------------------------*/\n");
 
-       socketActiu=MI_HaArribatPetiConv(socketsEscoltant[1]);
-       EvalResult(socketActiu, socketsEscoltant, nSockets);
+       socketActiu=MI_HaArribatPetiConv(socketsEscoltant[SCK_TCP]);
+       EvalResult(socketActiu, socketsEscoltant, N_SOCKETS);
        if(socketActiu == TECLAT){
            port = getNumber();
            printf("/* Has entrat el port %i, ara entra la ip : \n", port);
            int ipLong = getIPAddress(ipRemota);
-           EvalResult(ipLong, socketsEscoltant, nSockets);
-           socketActiu = MI_DemanaConv(ipRemota, port, ipLocal, &portLocal, nickname, nicknameRemot);
-           EvalResult(socketActiu, socketsEscoltant, nSockets);
-           socketsEscoltant[1] = (int)socketActiu;
+           EvalResult(ipLong, socketsEscoltant, N_SOCKETS);
+           socketActiu = MI_DemanaConv(ipRemota, port, ALL_IP, &portLocal, nickname, nicknameRemot);
+           EvalResult(socketActiu, socketsEscoltant, N_SOCKETS);
+           socketsEscoltant[SCK_TCP] = (int)socketActiu;
        }
-       // Si el socket actiu no és un teclat fem un accept.
+       // Si el socket actiu és el socket udp com que no estem conversant acceptem la conversa.
+       else if(socketActiu == SCK_UDP) {
+
+       }
+       // Si el socket actiu no és un teclat i no és una petició TCP fem un accept.
        else {
-           socketActiu = MI_AcceptaConv(socketActiu, ipRemota, &port, ipLocal, &portLocal, nickname, nicknameRemot);
-           EvalResult(socketActiu, socketsEscoltant, nSockets);
-           socketsEscoltant[1] = socketActiu;
+           socketActiu = MI_AcceptaConv(socketActiu, ipRemota, &port, ALL_IP, &portLocal, nickname, nicknameRemot);
+           EvalResult(socketActiu, socketsEscoltant, N_SOCKETS);
+           socketsEscoltant[SCK_TCP] = socketActiu;
+
+           int resultatAccio = 1;
+           while(resultatAccio > 0){
+               bzero(missatge, MAX_BUFFER);
+               socketActiu = MI_HaArribatLinia(socketsEscoltant[SCK_TCP]);
+               if(socketActiu == TECLAT){
+                   EvalResult(readFromKeyboard(missatge, MAX_BUFFER), socketsEscoltant, N_SOCKETS);
+                   if(strcmp(missatge,"$")!=1) break;
+                   resultatAccio = MI_EnviaLinia(socketsEscoltant[SCK_TCP], missatge);
+                   EvalResult(resultatAccio, socketsEscoltant, N_SOCKETS);
+               }
+               // Estem conversant, per tant hem de contestar amb un codi en concret.
+               else if(socketActiu == SCK_UDP){
+
+               }
+               else{
+                   resultatAccio = MI_RepLinia(socketActiu, missatge);
+                   if(resultatAccio != 0){
+                       printf("%s\n", missatge);
+                   }
+               }
+           }
        }
        // -------------------------
 
@@ -122,30 +161,14 @@ int main(int argc,char *argv[])
        // char promptRemot[strlen(nicknameRemot)+1];
        // creaPrompt(promptRemot, nicknameRemot);
 
-       int resultatAccio = 1;
-       while(resultatAccio > 0){
-           bzero(missatge, MAX_BUFFER);
-           socketActiu = MI_HaArribatLinia(socketsEscoltant[1]);
-           if(socketActiu == TECLAT){
-               EvalResult(readFromKeyboard(missatge, MAX_BUFFER), socketsEscoltant, nSockets);
-               if(strcmp(missatge,"$")!=1) break;
-               resultatAccio = MI_EnviaLinia(socketsEscoltant[1], missatge);
-               EvalResult(resultatAccio, socketsEscoltant, nSockets);
-           }
-           else{
-               resultatAccio = MI_RepLinia(socketActiu, missatge);
-               if(resultatAccio != 0){
-                   printf("%s\n", missatge);
-               }
-           }
-       }
+
 
        // En cas que el resultat sigui -2 o -1 es tenquen tots els sockets.
-       EvalResult(resultatAccio, socketsEscoltant, nSockets);
+       EvalResult(resultatAccio, socketsEscoltant, N_SOCKETS);
 
        int i;
-       close(socketsEscoltant[1]);
-       socketsEscoltant[1] = socketEscoltador;
+       close(socketsEscoltant[SCK_TCP]);
+       socketsEscoltant[SCK_TCP] = socketEscoltador;
        printf("/*-------------------------------------------------------------------*/\n");
        printf("/* CONVERSA ACABADA, vols seguir amb el programa??\n");
        printf("/* Entre '1' per continuar '0' per acabar.\n");
