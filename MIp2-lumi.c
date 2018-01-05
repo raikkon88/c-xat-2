@@ -216,6 +216,8 @@ int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struc
     else{
         printf("%s\n", "Esta entrant per aqui");
         sscanf(direccio, "%[^'@']@%s",nickTo, dnsTo);
+        printf("%s\n", nickTo);
+        printf("%s\n", dnsTo);
     }
 
     int resultatAccio = 0;
@@ -732,6 +734,10 @@ int LUMI_EnviaPeticio(const int * LlistaSck, int socketDeLlista, char * nickFrom
         }
         else if(tipusPeticio == LOCALITZACIO){
             // Envia la petició de localització
+            printf("%s\n", nickFrom);
+            printf("%s\n", dnsFrom);
+            printf("%s\n", nickTo);
+            printf("%s\n", dnsTo);
             resultat = LUMI_PeticioLocalitzacio(LlistaSck[socketDeLlista], nickFrom, dnsFrom, nickTo, dnsTo);
         }
         else{

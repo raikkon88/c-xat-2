@@ -328,7 +328,7 @@ void EvalResult(int res, const int *sockets, int nSockets){
  * Retorna un -1 si quelcom ha anat malament.
  * Retorna el nombre de bytes llegits si tot ha anat bé, inData conté la cadena de caràcters llegida.
  */
-int readFromKeyboard(char * inData, int numberBytesToRead){
+int readFromKeyboard(char * inData, int numberBytesToRead){    
 	int bytes_llegits;
 	if((bytes_llegits=read(0, inData, numberBytesToRead))==-1)
 	{
