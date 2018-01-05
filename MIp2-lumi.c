@@ -386,7 +386,7 @@ int LUMI_ContestaServidor(int sck, const char * nickFrom, const char * dnsFrom, 
     MontaAdrecaMi(direccio, nickFrom, dnsFrom);
     char resposta[MAX_LINIA];
     LUMI_GeneraRespostaLocalitzacio(codi, direccio, resposta);
-    printf("%s\n", "Ha generat la resposta de localitzacio \n");
+    printf("Ha generat la resposta de localitzacio -> %s\n", resposta);
     return LUMI_EnviaAMI(sck, dnsFrom, resposta);
 }
 
