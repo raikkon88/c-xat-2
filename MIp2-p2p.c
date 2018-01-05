@@ -147,6 +147,7 @@ int main(int argc,char *argv[])
 
         // Purguem variables que s'han de tornar a fer servir.
         bzero(instruccio, MAX_BUFFER);
+        bzero(missatge, MAX_BUFFER);
         bzero(usuariPreguntador, MAX_BUFFER);
         bzero(dnsPreguntador, MAX_BUFFER);
 
@@ -201,7 +202,8 @@ int main(int argc,char *argv[])
         }
         // Si el socket actiu és el socket udp com que no estem conversant acceptem la conversa.
         else if(socketActiu == socketsEscoltant[SCK_UDP]) {
-            int peticio = LUMI_ProcessaClient(socketsEscoltant[SCK_UDP], missatge, usuariPreguntador, dnsPreguntador);
+            int peticio = LUMI_ProcessaClient(socketActiu, missatge, usuariPreguntador, dnsPreguntador);
+            printf("%s\n",missatge);
             if(peticio == LOCALITZACIO_PETICIO){
                 // S'ha de retornar el missatge : AL0preguntador@dnsPreguntador#IP#PORT_TCP
                 resultat = LUMI_ResponLocalitzacio(socketsEscoltant[SCK_UDP], ONLINE_LLIURE, usuariPreguntador, dnsPreguntador, ipTcpLocal, portTCPLocal);

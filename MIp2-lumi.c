@@ -266,12 +266,6 @@ int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
 
     // Extraiem els camps de les direccions
     sscanf(direccions, "%[^'@']@%[^'#']#%[^'@']@%s", nickFrom, dnsFrom, nickTo, dnsTo);
-
-    printf("nick from : %s\n", nickFrom);
-    printf("dns from : %s\n", dnsFrom);
-    printf("nick to : %s\n", nickTo);
-    printf("dns to : %s\n", dnsTo);
-
     int resultatAccio = 0;
 
     // Sóc el domini destí
@@ -456,10 +450,7 @@ int UDP_CreaSock(const char *IPloc, int portUDPloc)
 /* Retorna -1 si hi ha error; el nombre de bytes enviats si tot va bé.    */
 int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes, int LongSeqBytes)
 {
-    //printf("S'esta enviant %s\n", SeqBytes);
-
-    //printf("%s\n", IPrem);
-    //printf("%i\n", portUDPrem);
+    printf("S'esta enviant %s\n", SeqBytes);
 
 	struct sockaddr_in adrrem;
 	adrrem.sin_family=AF_INET;
@@ -499,17 +490,20 @@ int UDP_RepDe(int Sck, char *IPrem, int *portUDPrem, char *SeqBytes, int LongSeq
 
 	//rebre el missatge
 	int bllegit;
-	if((bllegit=recvfrom(Sck,SeqBytes,LongSeqBytes,MSG_OOB,(struct sockaddr*)&adrrem,&ladrrem))==-1)
+	if((bllegit=recvfrom(Sck,SeqBytes,LongSeqBytes,0,(struct sockaddr*)&adrrem,&ladrrem))==-1)
 	{
 		perror("Error recvfrom\n");
 		close(Sck);
 		return -1;
 	}
 
+    printf("S'ha rebut -> %s\n", SeqBytes);
+
+
     bzero(IPrem, MAX_IP_LENGTH);
 	strcpy(IPrem,inet_ntoa(adrrem.sin_addr));
 	*portUDPrem=ntohs(adrrem.sin_port);
-	return bllegit - 1; // Se li resta el '\0'
+	return bllegit -1 ; // Se li resta el '\0'
 }
 
 /* S’allibera (s’esborra) el socket UDP d’identificador “Sck”.            */
@@ -855,6 +849,7 @@ int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns){
 
     char ipRem[MAX_IP_LENGTH] = "";
 	int  portRem = 0;
+
     int longitud = UDP_RepDe(sck, ipRem, &portRem, missatge, MAX_MESSAGE_LENGHT);
     printf("##### HA ARRIBAT -> %s\n", missatge);
     int resultatAccio = 0;
