@@ -461,7 +461,7 @@ int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes,
 
 	//enviar el missatge
 	int bescrit;
-	if((bescrit=sendto(Sck,SeqBytes,LongSeqBytes,0,(struct sockaddr*)&adrrem,sizeof(adrrem)))==-1)
+	if((bescrit=sendto(Sck,SeqBytes,strlen(SeqBytes),0,(struct sockaddr*)&adrrem,sizeof(adrrem)))==-1)
 	{
 		perror("Error en sendto");
 		close(Sck);
