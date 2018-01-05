@@ -91,6 +91,7 @@ struct DataSet {
     struct Registre data[MAX_CLIENTS]; // Taula de clients que es poden connectar amb el servidor.
     char domini[MAX_LENGHT_DOMINI];
     int nClients; // Nombre de clients inscrits.
+    int log;
 
 };
 
@@ -145,13 +146,12 @@ void LUMI_crea_resposta_registre(char * resposta, char tipusResposta, int valorR
 
 int LUMI_HaArribatAlgunaCosa(const int * socketsEscoltant, int nSockets);
 int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc);
-int LUMI_EnviaPeticio(const int * LlistaSck, int socketDeLlista, char * nickFrom, char * dnsFrom, char * nickTo, char * dnsTo, char * ipTCPRem, int * portTCPRem, char tipusPeticio, int timeout);
-int LUMI_PeticioRegistre(int Sck, const char *usuari, char * domini);
-int LUMI_ResponLocalitzacio(int socket, int codi, const char * usuariPreguntador, const char * dnsPreguntador, char * ip, int portTCP);
-//int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc);
-int LUMI_PeticioDesregistre(int Sck, const char *usuari, char * domini);
-//int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc);
-int LUMI_PeticioLocalitzacio(int Sck, const char *nickFrom, const char * dnsFrom, const char * nickTo, const char *dnsTo);
-//int LUMI_PeticioLocalitzacio(int Sck, const char *MI_preguntador,const char *MI_preguntat, int portUDPloc);
+int LUMI_EnviaPeticio(const int * LlistaSck, int socketDeLlista, char * nickFrom, char * dnsFrom, char * nickTo, char * dnsTo, char * ipTCPRem, int * portTCPRem, char tipusPeticio, int timeout, int logDescriptor);
+int LUMI_PeticioRegistre(int Sck, const char *usuari, char * domini, int logDescriptor);
+int LUMI_ResponLocalitzacio(int socket, int codi, const char * usuariPreguntador, const char * dnsPreguntador, char * ip, int portTCP, int logDescriptor);
+int LUMI_PeticioDesregistre(int Sck, const char *usuari, char * domini, int logDescriptor);
+int LUMI_PeticioLocalitzacio(int Sck, const char *nickFrom, const char * dnsFrom, const char * nickTo, const char *dnsTo, int logDescriptor);
 
-int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns, char * ipTCPRem, int * portTCPrem);
+int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns, char * ipTCPRem, int * portTCPrem, int logDescriptor);
+int LUMI_GeneraLog(char * NomFitxLog);
+int LUMI_TancaLog(int logDescriptor);
