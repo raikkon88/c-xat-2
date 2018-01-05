@@ -130,13 +130,6 @@ int main(int argc,char *argv[])
     EvalResult(LUMI_getIpiPortDeSocket(socketsEscoltant[SCK_UDP], ipUdpLocal, &portUDPLocal), socketsEscoltant, N_SOCKETS);
     printf("/* SOCKET %i Ip i Port UDP configurat de manera local : %s -> %i\n", socketsEscoltant[SCK_UDP], ipUdpLocal, portUDPLocal);
 
-    // Es configura el socket TCP i s'emplenen els camps de ip i port locals.
-    socketsEscoltant[SCK_TCP] = MI_IniciaEscPetiRemConv(PORT_DEFECTE);
-    socketEscoltador = socketsEscoltant[SCK_TCP];
-    EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS); // Evaluem el resultat de l'anterior instrucció
-    EvalResult(MI_getIpiPortDeSocket(socketsEscoltant[SCK_TCP], ipTcpLocal, &portTCPLocal), socketsEscoltant, N_SOCKETS);
-    printf("/* SOCKET %i Ip i Port TCP configurat de manera local : %s -> %i\n", socketsEscoltant[SCK_TCP], ipTcpLocal, portTCPLocal);
-
     int resultat = LUMI_EnviaPeticio((int *)&socketsEscoltant, SCK_UDP, nickname, domini, "", "", "", 0, REGISTRE, TIMEOUT);
     if(resultat == REGISTRE_CORRECTE){
         // S'ha registrat correctament, escriure per pantalla.
@@ -150,6 +143,13 @@ int main(int argc,char *argv[])
 
     // EN aquest punt estic registrat!
     while(fi != FI_PROGRAMA){
+
+        // Es configura el socket TCP i s'emplenen els camps de ip i port locals.
+        socketsEscoltant[SCK_TCP] = MI_IniciaEscPetiRemConv(PORT_DEFECTE);
+        socketEscoltador = socketsEscoltant[SCK_TCP];
+        EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS); // Evaluem el resultat de l'anterior instrucció
+        EvalResult(MI_getIpiPortDeSocket(socketsEscoltant[SCK_TCP], ipTcpLocal, &portTCPLocal), socketsEscoltant, N_SOCKETS);
+        printf("/* SOCKET %i Ip i Port TCP configurat de manera local : %s -> %i\n", socketsEscoltant[SCK_TCP], ipTcpLocal, portTCPLocal);
 
         // Purguem variables que s'han de tornar a fer servir.
         bzero(instruccio, MAX_BUFFER);
@@ -230,26 +230,6 @@ int main(int argc,char *argv[])
         }
         // -------------------------
         estat = DESCONNECTAT;
-        //
-        //mostraDadesRemotes(nicknameRemot, port, ipRemota);
-        //MI_AcabaConv(socketsEscoltant[SCK_TCP]);
-        // Intent de treure els prompts local i remot
-        // S'ha intentat accedir al buffer de la pantalla per extreure el prompt si arriva algu i sinó es pinta l'altre.
-        //---------------------------------------------------------------------------------------------------------------
-        // char promptLocal[strlen(nickname)+1];
-        // creaPrompt(promptLocal, nickname);
-        //
-        // char promptRemot[strlen(nicknameRemot)+1];
-        // creaPrompt(promptRemot, nicknameRemot);
-
-        //socketsEscoltant[SCK_TCP] = socketEscoltador;
-        // while(fi == '1' || fi != '0'){
-        //
-        //     nInstruccio = readFromKeyboard(instruccio, MAX_BUFFER);
-        //     if(nInstruccio == 1){
-        //         fi = instruccio[0];
-        //     }
-        // }
     }
 
     return (0);
