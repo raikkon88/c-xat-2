@@ -855,7 +855,7 @@ int LUMI_ResponLocalitzacio(int socket, int codi, const char * usuariPreguntador
         missatge[strlen(missatge)] = SEPARADOR;
         //printf("%s\n",missatge);
         char portString[6];
-        //sprintf(portString, "%d", portTCP);
+        sprintf(portString, "%d", portTCP);
         strcat(missatge, portString);
         //printf("%s\n",missatge);
         //printf("%s\n","????????????????????????????????????????");
