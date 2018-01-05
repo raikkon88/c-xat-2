@@ -218,9 +218,6 @@ int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struc
         sscanf(direccio, "%[^'@']@%s",nickTo, dnsTo);
     }
 
-    printf("nick to : %s\n", nickTo);
-    printf("dns to : %s\n", dnsTo);
-
     int resultatAccio = 0;
     if(strcmp(dnsTo, d->domini) == 0){ // El missatge va dirigit a mi
         struct Registre desti = create(nickTo);

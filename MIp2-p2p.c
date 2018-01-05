@@ -190,8 +190,10 @@ int main(int argc,char *argv[])
                 else if(resultat == LOCALITZACIO_ONLINE_LLIURE){
                     printf("/* Connectant amb %s@%s a la ip %s, port %i. \n", nickname, domini, ipRemota, portTCPRem);
                     estat = CONNECTAT;
+                    socketEscoltador = socketsEscoltant[SCK_TCP];
                     socketsEscoltant[SCK_TCP] = MI_DemanaConv(ipRemota, portTCPRem, ipTcpLocal, &portTCPLocal, usuariPreguntador, nickname);
                     EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS);
+                    printf("%s\n", "s'inicia la conversa... crec que no hi arriva...");
                     conversa(socketsEscoltant[SCK_TCP], socketsEscoltant, nickname);
                 }
                 else if(resultat == LOCALITZACIO_NO_EXISTEIX){
@@ -224,7 +226,7 @@ int main(int argc,char *argv[])
         }
         // -------------------------
         estat = DESCONNECTAT;
-        socketsEscoltant[SCK_TCP] = socketEscoltador;
+        //
         //mostraDadesRemotes(nicknameRemot, port, ipRemota);
         //MI_AcabaConv(socketsEscoltant[SCK_TCP]);
         // Intent de treure els prompts local i remot
