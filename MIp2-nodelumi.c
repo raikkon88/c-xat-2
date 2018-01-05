@@ -14,9 +14,10 @@
 #include <stdio.h>
 #include "MIp2-lumi.h"
 
-#define DB_FILE         "usuaris.txt"   // Nom del fitxer on es desen els usuaris en el servidor
-#define IP_DEFAULT      "0.0.0.0"       // Ip per defecte que utilitza el servidor per escoltar peticions UDP.
-#define PORT_DEFAULT    8765            // Port on el servidor escoltarà peticions UDP per defecte.
+#define DB_FILE         "usuaris.txt"       // Nom del fitxer on es desen els usuaris en el servidor
+#define IP_DEFAULT      "0.0.0.0"           // Ip per defecte que utilitza el servidor per escoltar peticions UDP.
+#define PORT_DEFAULT    8765                // Port on el servidor escoltarà peticions UDP per defecte.
+
 
 /* Definició de constants, p.e., #define MAX_LINIA 150                    */
 

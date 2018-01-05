@@ -19,6 +19,8 @@
 #define MIDA_RESPOSTA_REGISTRE      3
 #define MAX_LINIA                   200
 #define SEPARADOR                   '#'
+#define CLIENT_LOG_FILE             "xat2-client.log"
+#define SERVER_LOG_FILE             "xat2-server.log"
 
 
 // #define AL0                  0
@@ -46,6 +48,7 @@ void MontaAdrecaMi(char * direccio, const char * dns, const char * username);
 int Log_CreaFitx(const char *NomFitxLog);
 int Log_Escriu(int FitxLog, const char *MissLog);
 int Log_TancaFitx(int FitxLog);
+int LUMI_EscriuLog(int descriptor, char * prefix, char * cadena);
 
 /* Definicio de funcions EXTERNES, és a dir, d'aquelles que en altres     */
 /* fitxers externs es faran servir.                                       */
@@ -59,6 +62,8 @@ int Log_TancaFitx(int FitxLog);
 /* Descripció dels valors de retorn de la funció...                       */
 
 
+// **************************** LUMI SERVIDOR ******************************
+
 /**
  * Funció que prepara el servidor per al processament de peticions dels clents.
  * Reb un Dataset buit i un nom de fitxer i emplena el dataset amb les dades del
@@ -69,13 +74,18 @@ int Log_TancaFitx(int FitxLog);
  * SUCCESS -> identificador del socket UDP connectat.
  */
 int LUMI_inicialitza_servidor(struct DataSet * d, char * filename, char * ip, int port){
+
     init(d);
 	int lectura = llegirUsuaris(d, filename);
 	if(lectura < 0)
 		return -1;
 
+    LUMI_EscriuLog(d->log, " [OK-INI] ", "S'han inicialitzat els usuaris");
+
 	// Inicialitzem el socket d'escolta del servidor.
 	return UDP_CreaSock(ip, port);
+
+    LUMI_EscriuLog(d->log, " [OK-INI] ", "S'ha creat el socket UDP");
 }
 
 void LUMI_crea_resposta_registre(char * resposta, char tipusResposta, int valorResposta){
@@ -151,45 +161,43 @@ int LUMI_processa(int sck, struct DataSet * d){
             // int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes, int LongSeqBytes
             char resposta[MIDA_RESPOSTA_REGISTRE] = "";
             LUMI_crea_resposta_registre(resposta, REGISTRE, resultatRegistre);
-            //printf("Resposta : %s\n", resposta);
+            LUMI_EscriuLog(d->log, " [W-REG] Enviant Resposta -> ", resposta);
 			resultatAccio = UDP_EnviaA(sck, ipRem, portRem, resposta, MIDA_RESPOSTA_REGISTRE);
-            // TODO: Escriure log
-            // if(resultatResposta < 0){
-            //     // Escriure Log
-            //     printf("%s\n", "Error al enviar la resposta del registre.");
-            // }
+            if(resultatAccio < 0){
+                LUMI_EscriuLog(d->log, " [ERR-REG] ", "Error al enviar la resposta del registre.");
+            }
+            else {
+                LUMI_EscriuLog(d->log, " [OK-REG] ", "Enviada Correctament");
+            }
 		}
 		else if(missatge[0] == DESREGISTRE){
 			printf("%s -> %i bytes\n", "Petició de desregistre", longitud);
 			int resultatRegistre = LUMI_registre(missatge, longitud, d, ipRem, portRem, 0);
             char resposta[MIDA_RESPOSTA_REGISTRE]="";
             LUMI_crea_resposta_registre(resposta, DESREGISTRE, resultatRegistre);
-            //printf("Resposta : %s\n", resposta);
+            LUMI_EscriuLog(d->log, " [W-DES] Enviant Resposta -> ", resposta);
 			resultatAccio = UDP_EnviaA(sck, ipRem, portRem, resposta, MIDA_RESPOSTA_REGISTRE);
-            // TODO : Escriure Log
-            // if(resultatResposta < 0){
-            //     // Escriure Log
-            //     printf("%s\n", "Error al enviar la resposta del desregistre.");
-            // }
+            if(resultatAccio < 0){
+                LUMI_EscriuLog(d->log, " [ERR-DES] ", "Error al enviar la resposta del desregistre.");
+            }
+            else {
+                LUMI_EscriuLog(d->log, " [OK-DES] ", "Enviada Correctament");
+            }
 		}
 		else if(missatge[0] == LOCALITZACIO){
-			//printf("%s -> %i bytes\n","Petició de localització.", longitud);
             int resultatLocalitzacio = LUMI_localitza(sck, missatge, longitud, d);
-            // TODO : Escriure Log.
-
 		}
         else if(missatge[0] == ACCEPTAT_MISSATGE){
             if(missatge[1] == LOCALITZACIO){
                 // En aquest cas ens està arrivant o bé una resposta d'un client o una resposta d'un servidor.
                 int resultatResposta = LUMI_ProcessaRespostaLocalitzacio(sck, missatge, longitud, d);
-                // TODO : Escriure Log.
             }
             else{
-                // TODO :  Escriure Log,  El missatge rebut és incorrecte i s'ha descartat
+                LUMI_EscriuLog(d->log, " [ERR-PRO] S'ha descartat el missatge rebut.", missatge);
             }
         }
         else {
-            // TODO : Escriure log, el missatge rebut és incorrecte i s'ha descartat
+            LUMI_EscriuLog(d->log, " [ERR-PRO] S'ha descartat el missatge rebut.", missatge);
         }
 	}
 }
@@ -225,18 +233,29 @@ int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struc
         struct Registre desti = create(nickTo);
         existeixRegistre(d, &desti);
         if(desti.online != -1) { // El registre existeix
+            LUMI_EscriuLog(d->log, " [W-LOC] S'actua de pont del missatge -> ", rebut);
             resultatAccio = UDP_EnviaA(sck, desti.ip, desti.port, rebut, longitud);
-            // TODO : Escriure Log
+            if(resultatAccio < 0){
+                LUMI_EscriuLog(d->log, " [ERR-LOC] ", "Error al actuar de pont.");
+            }
+            else {
+                LUMI_EscriuLog(d->log, " [OK-LOC] ", "S'ha actuat de pont amb éxit.");
+            }
         }
         else {
-            // TODO : Escriure log, el registre no existeix.
+            LUMI_EscriuLog(d->log, " [ERR-LOC] No existeix el registre -> ", nickTo);
         }
     }
     else { // El missatge s'ha de reenviar a un altre servidor.
         // TODO S'ha de canviar el nickTo i treure'l, ha d'anar inclós a dins del missatge.
-        //resultatAccio = LUMI_EnviaAMI(sck, nickTo, dnsTo, rebut);
+        LUMI_EscriuLog(d->log, " [W-LOC] Es reenvia el missatge -> ", rebut);
         resultatAccio = LUMI_EnviaAMI(sck, dnsTo, rebut);
-        // TODO : Escriure Log.
+        if(resultatAccio < 0){
+            LUMI_EscriuLog(d->log, " [ERR-LOC] Error al reenviar missatge al servidor -> ", dnsTo);
+        }
+        else {
+            LUMI_EscriuLog(d->log, " [OK-LOC] Missatge reenviat correctament al servidor -> ", dnsTo);
+        }
     }
 }
 
@@ -260,6 +279,9 @@ int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, 
 
     // TODO : S'ha canviar el mostrar dataset per el escriure log.
     showDataSet(d);
+
+    LUMI_EscriuLog(d->log, " [OK-DATA] S'ha actualitzat el registre -> ", user.username);
+
     return 0;
 }
 
@@ -288,19 +310,35 @@ int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
             // Mirem si està on line o si no.
             if(r.online == 1){ // Si està onLine (Si està ocupat o no ho gestiona el client)
                 // Li diem al client b que contesti al client a (BRIDGE)
+                LUMI_EscriuLog(d->log, " [LOC] S'actua de pont del missatge -> ", rebut);
                 resultatAccio = UDP_EnviaA(sck, r.ip, r.port, rebut, longitud);
-                // TODO : Escriure Log
+                if(resultatAccio < 0){
+                    LUMI_EscriuLog(d->log, " [LOC] ", "Error al actuar de pont.");
+                }
+                else {
+                    LUMI_EscriuLog(d->log, " [LOC] ", "S'ha actuat de pont amb éxit.");
+                }
             }
             else { // Si no està online :
                 if(strcmp(dnsFrom, dnsTo) == 0){
                     // El servidor pot gestionar la resposta directa cap al client.
                     resultatAccio = LUMI_ContestaClientMateixDomini(sck, nickFrom, OFFLINE, d);
-                    // TODO : Escriure Log
+                    if(resultatAccio < 0){
+                        LUMI_EscriuLog(d->log, " [ERR-LOC] Error al contestar client del mateix domini -> ", nickFrom);
+                    }
+                    else{
+                        LUMI_EscriuLog(d->log, " [OK-LOC] Contestat correctament -> ", nickFrom);
+                    }
                 }
                 else{
                     // Contesta al servidor anterior
                     resultatAccio = LUMI_ContestaServidor(sck, nickFrom, dnsFrom, OFFLINE);
-                    // TODO : Escriure Log
+                    if(resultatAccio < 0){
+                        LUMI_EscriuLog(d->log, " [ERR-LOC] Error al contestar al servidor -> ", dnsFrom);
+                    }
+                    else{
+                        LUMI_EscriuLog(d->log, " [OK-LOC] Contestat correctament -> ", dnsFrom);
+                    }
                 }
             }
         }
@@ -308,18 +346,34 @@ int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
             if(strcmp(dnsFrom, dnsTo) == 0){ // (AL2)
                 // El servidor pot gestionar la resposta directa cap al client.
                 resultatAccio = LUMI_ContestaClientMateixDomini(sck, nickFrom, NO_EXISTEIX, d);
-                // TODO : Escriure Log
+                if(resultatAccio < 0){
+                    LUMI_EscriuLog(d->log, " [ERR-LOC] Error al contestar client del mateix domini -> ", nickTo);
+                }
+                else{
+                    LUMI_EscriuLog(d->log, " [OK-LOC] Contestat correctament -> ", nickFrom);
+                }
             }
             else{
                 // Contesta al servidor anterior
                 resultatAccio = LUMI_ContestaServidor(sck, nickFrom, dnsFrom, NO_EXISTEIX);
-                // TODO : Escriure Log
+                if(resultatAccio < 0){
+                    LUMI_EscriuLog(d->log, " [ERR-LOC] Error al contestar al servidor -> ", dnsFrom);
+                }
+                else{
+                    LUMI_EscriuLog(d->log, " [OK-LOC] Contestat correctament -> ", dnsFrom);
+                }
             }
         }
     }
     else { // No sóc el domini destí (Bridge)
+        LUMI_EscriuLog(d->log, " [W-LOC] Actuant de pont -> ", rebut);
         resultatAccio = LUMI_EnviaAMI(sck, dnsTo, rebut);
-        // TODO : Escriure Log
+        if(resultatAccio < 0){
+            LUMI_EscriuLog(d->log, " [ERR-LOC] Error al actuar de pont cap a -> ", dnsTo);
+        }
+        else{
+            LUMI_EscriuLog(d->log, " [OK-LOC] S'ha actuat de pont correctament cap a -> ", dnsTo);
+        }
     }
 }
 
@@ -340,11 +394,11 @@ int LUMI_ContestaClientMateixDomini(int sck, char * nickFrom, int codiResposta, 
         // Contestem al client a que no es pot realitzar la connexió (AL3)
         char resposta[TOTAL_LENGHT_MESSAGE];
         LUMI_GeneraRespostaLocalitzacio(codiResposta, "", resposta);
+        LUMI_EscriuLog(d->log, " [W-LOC] Contestant a un client del mateix domini -> ", resposta);
         return UDP_EnviaA(sck, origen.ip, origen.port, resposta, strlen(resposta));
     }
     else{
-        // TODO :  MISSATGE DESCARTAT... es pot escriure al log.
-        // El que m'ha enviat el missatge no existeix i és un troll!
+        LUMI_EscriuLog(d->log, " [WARNING] He rebut quelcom d'un client intrús! -> ", nickFrom);
     }
 }
 
@@ -356,6 +410,249 @@ int LUMI_GeneraRespostaLocalitzacio(int codi, char* contingut, char * resposta){
     strcat(resposta, contingut);
     return 0;
 }
+
+/*********************** FUNCIONS CLIENT ************************************/
+
+int LUMI_HaArribatAlgunaCosa(const int * socketsEscoltant, int nSockets){
+    return HaArribatAlgunaCosaEnTemps(socketsEscoltant, nSockets, -1);
+}
+
+/* */
+int LUMI_EnviaPeticio(const int * LlistaSck, int socketDeLlista, char * nickFrom, char * dnsFrom, char * nickTo, char * dnsTo, char * ipTCPRem, int * portTCPRem, char tipusPeticio, int timeout, int logDescriptor){
+    int nombreReenviaments = 0;
+    int socket = -2;
+    int resultat = 0;
+    while(nombreReenviaments < MAX_NOMBRE_RETRANSMISSIONS && socket == -2){
+        if(tipusPeticio == REGISTRE){
+            // Envia la petició de registre
+            resultat = LUMI_PeticioRegistre(LlistaSck[socketDeLlista], nickFrom, dnsFrom, logDescriptor);
+        }
+        else if(tipusPeticio == DESREGISTRE){
+            // Envia la petició de desregitre
+            resultat = LUMI_PeticioDesregistre(LlistaSck[socketDeLlista], nickFrom, dnsFrom, logDescriptor);
+        }
+        else if(tipusPeticio == LOCALITZACIO){
+            // Envia la petició de localització
+            resultat = LUMI_PeticioLocalitzacio(LlistaSck[socketDeLlista], nickFrom, dnsFrom, nickTo, dnsTo, logDescriptor);
+        }
+        else{
+            resultat = -1;
+        }
+
+        if(resultat < 0){
+            return resultat;
+        }
+
+        // Evalúa si ha arrivat alguna cosa dins del timeout.
+        socket = HaArribatAlgunaCosaEnTemps(LlistaSck, sizeof(LlistaSck), timeout);
+        nombreReenviaments++;
+    }
+
+    // Evaluació dels possibles errors de la funció.
+    if(nombreReenviaments == MAX_NOMBRE_RETRANSMISSIONS){
+        LUMI_EscriuLog(logDescriptor, " [TIME] ", "Ha expirat el timeout");
+    }
+    else{
+        if(socket >= 0){ // S'ha rebut la resposta
+            printf("S'ha rebut resposta del servidor \n");
+            char missatge[MAX_MESSAGE_LENGHT];
+            bzero(missatge, MAX_MESSAGE_LENGHT);
+            return LUMI_ProcessaClient(socket, missatge, "", "", ipTCPRem, portTCPRem, logDescriptor);
+        }
+        else { // Hi ha hagut un error en la resposta.
+            LUMI_EscriuLog(logDescriptor, " [ERR-PRO] ", "Hi ha hagut error en l'enviament ");
+        }
+    }
+
+}
+
+int LUMI_PeticioRegistre(int Sck, const char *usuari, char * domini, int logDescriptor){ //, const char *IPloc, int portUDPloc){
+
+	//fem la peticio de registre
+	char SeqBytes[TOTAL_LENGHT_MESSAGE];
+    bzero(SeqBytes, TOTAL_LENGHT_MESSAGE);
+	strcpy(SeqBytes, "R");
+	strcat(SeqBytes, usuari);
+
+    LUMI_EscriuLog(logDescriptor, " [OK-REG] Enviada petició de registre ", SeqBytes);
+
+    return LUMI_EnviaAMI(Sck, domini, SeqBytes);
+}
+
+int LUMI_PeticioDesregistre(int Sck, const char *usuari, char * domini, int logDescriptor){
+
+    char SeqBytes[TOTAL_LENGHT_MESSAGE];
+    bzero(SeqBytes, TOTAL_LENGHT_MESSAGE);
+
+	strcpy(SeqBytes, "D");
+	strcat(SeqBytes, usuari);
+
+    LUMI_EscriuLog(logDescriptor, " [OK-DES] Enviada petició de desregistre ", SeqBytes);
+
+    return LUMI_EnviaAMI(Sck, domini, SeqBytes);
+}
+
+int LUMI_PeticioLocalitzacio(int Sck, const char *nickFrom, const char * dnsFrom, const char * nickTo, const char *dnsTo, int logDescriptor){
+
+	char SeqBytes[TOTAL_LENGHT_MESSAGE];
+
+    char MI_preguntador[MAX_LINIA];
+    char MI_preguntat[MAX_LINIA];
+
+    bzero(SeqBytes, TOTAL_LENGHT_MESSAGE);
+    bzero(MI_preguntador, MAX_LINIA);
+    bzero(MI_preguntat, MAX_LINIA);
+
+    MontaAdrecaMi(MI_preguntador, dnsFrom, nickFrom);
+    MontaAdrecaMi(MI_preguntat, dnsTo, nickTo);
+
+    SeqBytes[0] = LOCALITZACIO;
+	strcat(SeqBytes, MI_preguntador);
+    SeqBytes[strlen(SeqBytes)] = SEPARADOR;
+	strcat(SeqBytes, MI_preguntat);
+
+    LUMI_EscriuLog(logDescriptor, " [OK-LOC] Enviada petició de localitzacio ", SeqBytes);
+
+    LUMI_EnviaAMI(Sck, dnsTo, SeqBytes);
+}
+
+int LUMI_ResponLocalitzacio(int socket, int codi, const char * usuariPreguntador, const char * dnsPreguntador, char * ip, int portTCP, int logDescriptor){
+
+    char missatge [TOTAL_LENGHT_MESSAGE];
+    char direccio [TOTAL_LENGHT_MESSAGE];
+
+    bzero(missatge, TOTAL_LENGHT_MESSAGE);
+    bzero(direccio, TOTAL_LENGHT_MESSAGE);
+    missatge[0] = ACCEPTAT_MISSATGE;
+    missatge[1] = LOCALITZACIO;
+    missatge[2] = codi;
+    MontaAdrecaMi(direccio, dnsPreguntador, usuariPreguntador);
+
+    if(codi == ONLINE_OCUPAT){
+        strcat(missatge, direccio);
+    }
+    else if(codi == ONLINE_LLIURE){
+        strcat(missatge, direccio);
+        missatge[strlen(missatge)] = SEPARADOR;
+        strcat(missatge, ip);
+        missatge[strlen(missatge)] = SEPARADOR;
+        char portString[6];
+        sprintf(portString, "%d", portTCP);
+        strcat(missatge, portString);
+    }
+    else{
+        return -1;
+    }
+
+    LUMI_EscriuLog(logDescriptor, " [OK-LOC] Enviada Resposta de petició ", missatge);
+
+    return LUMI_EnviaAMI(socket, dnsPreguntador, missatge);
+}
+
+int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns, char * ipTCPRem, int * portTCPrem, int logDescriptor){
+
+    char ipRem[MAX_IP_LENGTH] = "";
+	int  portRem = 0;
+
+    int longitud = UDP_RepDe(sck, ipRem, &portRem, missatge, MAX_MESSAGE_LENGHT);
+
+    LUMI_EscriuLog(logDescriptor, " [W-LOC] S'ha rebut -> ", missatge);
+
+    int resultatAccio = 0;
+
+    if(longitud < 0){
+        return -1;
+    }
+    else{
+        if(missatge[0] == ACCEPTAT_MISSATGE){
+            if(missatge[1] == REGISTRE){ // Resposta de registre
+                if(missatge[2] == CORRECTE){
+                    LUMI_EscriuLog(logDescriptor, " [OK-REG] ", "Acceptat missatge registre correcte");
+                    return REGISTRE_CORRECTE;
+                }
+                else if(missatge[2] == INCORRECTE){
+                    LUMI_EscriuLog(logDescriptor, " [ERR-REG] ", "Acceptat missatge registre incorrecte");
+                    return REGISTRE_INCORRECTE;
+                }
+                else{
+                    LUMI_EscriuLog(logDescriptor, " [ERR-REG] ", "Missatge rebut erroni");
+                    return MISSATGE_ERRONI;
+                }
+            }
+            else if(missatge[1] == DESREGISTRE){ // Resposta de desregistre
+                if(missatge[2] == CORRECTE){
+                    LUMI_EscriuLog(logDescriptor, " [OK-REG] ", "Acceptat missatge desregistre correcte");
+                    return DESREGISTRE_CORRECTE;
+                }
+                else if(missatge[2] == INCORRECTE){
+                    LUMI_EscriuLog(logDescriptor, " [ERR-DES] ", "Acceptat missatge desregistre incorrecte");
+                    return DESREGISTRE_INCORRECTE;
+                }
+                else{
+                    LUMI_EscriuLog(logDescriptor, " [ERR-DES] ", "Missatge rebut erroni");
+                    return MISSATGE_ERRONI;
+                }
+            }
+            else if(missatge[1] == LOCALITZACIO){ // Resposta de localització
+                if(missatge[2] == ONLINE_LLIURE){
+                    // Client amb el que es vol parlar està en línia, ha arrivat un missatge com el següent :
+                    //      AL0preguntador@dnsPreguntador#IP#PORT_TCP
+                    // S'ha d'extreure IP i PORT_TCP
+                    // S'ha de generar un socket TCP amb el programa MI i s'ha de connectar amb el client
+                    char port[6];
+                    bzero(port, 6);
+                    char resta[MAX_MESSAGE_LENGHT];
+
+                    sscanf(missatge, "%[^'#']#%[^'#']#%s",resta, ipTCPRem, port);
+                    *portTCPrem = atoi(port);
+
+                    LUMI_EscriuLog(logDescriptor, " [OK-LOC] Acceptat missatge online i lliure -> ", ipTCPRem);
+
+                    return LOCALITZACIO_ONLINE_LLIURE;
+                }
+                else if(missatge[2] == OFFLINE){
+                    LUMI_EscriuLog(logDescriptor, " [OK-LOC] ", "Acceptat missatge offline " );
+                    return LOCALITZACIO_OFFLINE;
+                }
+                else if(missatge[2] == NO_EXISTEIX){
+                    LUMI_EscriuLog(logDescriptor, " [OK-LOC] ", "Acceptat missatge no exiteix usuari " );
+                    return LOCALITZACIO_NO_EXISTEIX;
+                }
+                else if(missatge[2] == ONLINE_OCUPAT){
+                    LUMI_EscriuLog(logDescriptor, " [OK-LOC] ", "Acceptat missatge online i ocupat " );
+                    return LOCALITZACIO_ONLINE_OCUPAT;
+                }
+                else{
+                    LUMI_EscriuLog(logDescriptor, " [ERR-REG] ", "Missatge rebut erroni");
+                    return MISSATGE_ERRONI;
+                }
+            }
+        }
+        else if(missatge[0] == LOCALITZACIO) { // Missatge de localització, pregunten per mi.
+
+            char jo[MAX_MESSAGE_LENGHT];
+            bzero(jo, MAX_MESSAGE_LENGHT);
+            // S'emplenen els camps usuari i dns per que es pugui respondre.
+            sscanf(missatge, "L%[^'@']@%[^'#']#%s", usuari, dns, jo);
+            LUMI_EscriuLog(logDescriptor, " [OK-LOC] Rebut missatge de localització", missatge);
+            return LOCALITZACIO_PETICIO;
+        }
+        else{
+            LUMI_EscriuLog(logDescriptor, " [ERR-REG] ", "Missatge rebut erroni");
+        }
+    }
+
+}
+
+
+int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc)
+{
+	return UDP_CreaSock(IPloc,portUDPloc);
+}
+
+
+
+/*********************** FUNCIONS GENÈRIQUES ********************************/
 
 int LUMI_getIpiPortDeSocket(int sck, char * ip, int * port){
 
@@ -394,6 +691,15 @@ void MontaAdrecaMi(char * direccio, const char * dns, const char * username){
     strcat(direccio, dns);
 }
 
+
+/**
+ * Donada una direcció MI extreu el nom dns.
+ * dns conté la part del dns de la direcció MI de direcció.
+ */
+void LUMI_UsuariIDnsDeMi(const char *direccio, char * dns, char * username){
+    sscanf(direccio, "%[^'@']@%s", username, dns);
+}
+
 int LUMI_EnviaAMI(int sck, const char * dns, const char * missatge){
 
     char ipServ[MAX_IP_LENGTH];
@@ -407,6 +713,24 @@ int LUMI_EnviaAMI(int sck, const char * dns, const char * missatge){
 	}
     return 0;
 }
+
+int LUMI_EscriuLog(int descriptor, char * prefix, char * cadena){
+    char final[strlen(cadena) + strlen(prefix) + 1];
+    bzero(final, strlen(cadena) + strlen(prefix) + 1);
+    strcpy(final, prefix);
+    strcat(final, cadena);
+    Log_Escriu(descriptor, final);
+}
+
+int LUMI_GeneraLog(char * NomFitxLog){
+    return Log_CreaFitx(NomFitxLog);
+}
+
+int LUMI_TancaLog(int logDescriptor){
+    return Log_TancaFitx(logDescriptor);
+}
+
+/*********************** FUNCIONS UDP *************************************/
 
 /* Definicio de funcions INTERNES, és a dir, d'aquelles que es faran      */
 /* servir només en aquest mateix fitxer.                                  */
@@ -604,9 +928,6 @@ int UDP_TrobaAdrSockRem(int Sck, char *IPrem, int *portUDPrem)
 
 }
 
-int LUMI_HaArribatAlgunaCosa(const int * socketsEscoltant, int nSockets){
-    return HaArribatAlgunaCosaEnTemps(socketsEscoltant, nSockets, -1);
-}
 
 /* Examina simultàniament durant "Temps" (en [ms] els sockets (poden ser  */
 /* TCP, UDP i stdin) amb identificadors en la llista “LlistaSck” (de      */
@@ -677,13 +998,7 @@ int ResolDNSaIP(const char *NomDNS, char *IP)
 	return -1;
 }
 
-/**
- * Donada una direcció MI extreu el nom dns.
- * dns conté la part del dns de la direcció MI de direcció.
- */
-void LUMI_UsuariIDnsDeMi(const char *direccio, char * dns, char * username){
-    sscanf(direccio, "%[^'@']@%s", username, dns);
-}
+/********************** FUNCIONS LOG **************************************/
 
 /* Crea un fitxer de "log" de nom "NomFitxLog".                           */
 /* "NomFitxLog" és un "string" de C (vector de chars imprimibles acabat   */
@@ -713,258 +1028,10 @@ int Log_TancaFitx(int FitxLog)
 	return close(FitxLog);
 }
 
-int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc)
-{
-	return UDP_CreaSock(IPloc,portUDPloc);
-}
-
-/* */
-int LUMI_EnviaPeticio(const int * LlistaSck, int socketDeLlista, char * nickFrom, char * dnsFrom, char * nickTo, char * dnsTo, char * ipTCPRem, int * portTCPRem, char tipusPeticio, int timeout){
-    int nombreReenviaments = 0;
-    int socket = -2;
-    int resultat = 0;
-    while(nombreReenviaments < MAX_NOMBRE_RETRANSMISSIONS && socket == -2){
-        if(tipusPeticio == REGISTRE){
-            // Envia la petició de registre
-            resultat = LUMI_PeticioRegistre(LlistaSck[socketDeLlista], nickFrom, dnsFrom);
-        }
-        else if(tipusPeticio == DESREGISTRE){
-            // Envia la petició de desregitre
-            resultat = LUMI_PeticioDesregistre(LlistaSck[socketDeLlista], nickFrom, dnsFrom);
-        }
-        else if(tipusPeticio == LOCALITZACIO){
-            // Envia la petició de localització
-            resultat = LUMI_PeticioLocalitzacio(LlistaSck[socketDeLlista], nickFrom, dnsFrom, nickTo, dnsTo);
-        }
-        else{
-            resultat = -1;
-        }
-
-        if(resultat < 0){
-            return resultat;
-        }
-
-        // Evalúa si ha arrivat alguna cosa dins del timeout.
-        socket = HaArribatAlgunaCosaEnTemps(LlistaSck, sizeof(LlistaSck), timeout);
-        nombreReenviaments++;
-    }
-
-    // Evaluació dels possibles errors de la funció.
-    if(nombreReenviaments == MAX_NOMBRE_RETRANSMISSIONS){
-        // Timeout expirat , escriure log
-        // Mostrar per pantalla
-        printf("S'ha sobrepassat el nombre de reenviaments\n");
-    }
-    else{
-        if(socket >= 0){ // S'ha rebut la resposta
-            printf("S'ha rebut resposta del servidor \n");
-            char missatge[MAX_MESSAGE_LENGHT];
-            bzero(missatge, MAX_MESSAGE_LENGHT);
-            return LUMI_ProcessaClient(socket, missatge, "", "", ipTCPRem, portTCPRem);
-            // Escriure log, registre ok
-            // Mostrar per pantalla.
-        }
-        else { // Hi ha hagut un error en la resposta.
-            printf("Hi ha hagut error en l'enviament \n");
-            // Escriure Log, registre erroni.
-            // Mostrar per pantalla
-        }
-    }
-
-}
-
-int LUMI_PeticioRegistre(int Sck, const char *usuari, char * domini){ //, const char *IPloc, int portUDPloc){
-
-	//fem la peticio de registre
-	char SeqBytes[TOTAL_LENGHT_MESSAGE];
-    //char ipRemitent[MAX_IP_LENGTH];
-
-    bzero(SeqBytes, TOTAL_LENGHT_MESSAGE);
-    //bzero(ipRemitent, MAX_IP_LENGTH);
-
-	strcpy(SeqBytes, "R");
-	strcat(SeqBytes, usuari);
-
-    return LUMI_EnviaAMI(Sck, domini, SeqBytes);
-}
 
 
-//int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc){
-int LUMI_PeticioDesregistre(int Sck, const char *usuari, char * domini){
 
-    char SeqBytes[TOTAL_LENGHT_MESSAGE];
-    bzero(SeqBytes, TOTAL_LENGHT_MESSAGE);
-
-	strcpy(SeqBytes, "D");
-	strcat(SeqBytes, usuari);
-
-    return LUMI_EnviaAMI(Sck, domini, SeqBytes);
-}
-
-int LUMI_PeticioLocalitzacio(int Sck, const char *nickFrom, const char * dnsFrom, const char * nickTo, const char *dnsTo){//, int portUDPloc){
-
-	char SeqBytes[TOTAL_LENGHT_MESSAGE];
-
-    char MI_preguntador[MAX_LINIA];
-    char MI_preguntat[MAX_LINIA];
-
-    bzero(SeqBytes, TOTAL_LENGHT_MESSAGE);
-    bzero(MI_preguntador, MAX_LINIA);
-    bzero(MI_preguntat, MAX_LINIA);
-
-    MontaAdrecaMi(MI_preguntador, dnsFrom, nickFrom);
-    MontaAdrecaMi(MI_preguntat, dnsTo, nickTo);
-
-    SeqBytes[0] = LOCALITZACIO;
-	strcat(SeqBytes, MI_preguntador);
-    SeqBytes[strlen(SeqBytes)] = SEPARADOR;
-	strcat(SeqBytes, MI_preguntat);
-
-    LUMI_EnviaAMI(Sck, dnsTo, SeqBytes);
-}
-
-int LUMI_ResponLocalitzacio(int socket, int codi, const char * usuariPreguntador, const char * dnsPreguntador, char * ip, int portTCP){
-
-    char missatge [TOTAL_LENGHT_MESSAGE];
-    char direccio [TOTAL_LENGHT_MESSAGE];
-
-    bzero(missatge, TOTAL_LENGHT_MESSAGE);
-    bzero(direccio, TOTAL_LENGHT_MESSAGE);
-    //printf("%s\n",missatge);
-    //strcpy(missatge, "AL");
-    missatge[0] = ACCEPTAT_MISSATGE;
-    //printf("%s\n",missatge);
-    missatge[1] = LOCALITZACIO;
-    //printf("%s\n",missatge);
-    missatge[2] = codi;
-    //printf("%s\n",missatge);
-    MontaAdrecaMi(direccio, dnsPreguntador, usuariPreguntador);
-
-    if(codi == ONLINE_OCUPAT){
-        strcat(missatge, direccio);
-        //printf("%s\n",missatge);
-    }
-    else if(codi == ONLINE_LLIURE){
-        strcat(missatge, direccio);
-        //printf("%s\n",missatge);
-        missatge[strlen(missatge)] = SEPARADOR;
-        //printf("%s\n",missatge);
-        strcat(missatge, ip);
-        //printf("%s\n",missatge);
-        missatge[strlen(missatge)] = SEPARADOR;
-        //printf("%s\n",missatge);
-        char portString[6];
-        sprintf(portString, "%d", portTCP);
-        strcat(missatge, portString);
-        //printf("%s\n",missatge);
-        //printf("%s\n","????????????????????????????????????????");
-    }
-    else{
-        return -1;
-    }
-
-    return LUMI_EnviaAMI(socket, dnsPreguntador, missatge);
-}
-
-int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns, char * ipTCPRem, int * portTCPrem){
-
-    char ipRem[MAX_IP_LENGTH] = "";
-	int  portRem = 0;
-
-    int longitud = UDP_RepDe(sck, ipRem, &portRem, missatge, MAX_MESSAGE_LENGHT);
-    //printf("##### HA ARRIBAT -> %s\n", missatge);
-    int resultatAccio = 0;
-
-    if(longitud < 0){
-        return -1;
-    }
-    else{
-        if(missatge[0] == ACCEPTAT_MISSATGE){
-            if(missatge[1] == REGISTRE){ // Resposta de registre
-                if(missatge[2] == CORRECTE){
-                    // TODO :  Registrat correctament, escriure log
-                    // Escriure per pantalla també.
-                    return REGISTRE_CORRECTE;
-                }
-                else if(missatge[2] == INCORRECTE){
-                    // TODO :  Registrat incorrectament, escriure log
-                    // Escriure per pantalla també.
-                    return REGISTRE_INCORRECTE;
-                }
-                else{
-                    // TODO : Missatge arrivat erroni, escriure log
-                    // Escriure per pantalla també.
-                    return MISSATGE_ERRONI;
-                }
-            }
-            else if(missatge[1] == DESREGISTRE){ // Resposta de desregistre
-                if(missatge[2] == CORRECTE){
-                    // TODO :  Desregistrat correctament, escriure log
-                    // Escriure per pantalla també.
-                    return DESREGISTRE_CORRECTE;
-                }
-                else if(missatge[2] == INCORRECTE){
-                    // TODO :  Desregistrat incorrectament, escriure log
-                    // Escriure per pantalla també.
-                    return DESREGISTRE_INCORRECTE;
-                }
-                else{
-                    // TODO : Missatge arrivat erroni, escriure log
-                    // Escriure per pantalla també.
-                    return MISSATGE_ERRONI;
-                }
-            }
-            else if(missatge[1] == LOCALITZACIO){ // Resposta de localització
-                if(missatge[2] == ONLINE_LLIURE){
-                    // Client amb el que es vol parlar està en línia, ha arrivat un missatge com el següent :
-                    //      AL0preguntador@dnsPreguntador#IP#PORT_TCP
-                    // S'ha d'extreure IP i PORT_TCP
-                    // S'ha de generar un socket TCP amb el programa MI i s'ha de connectar amb el client
-                    char port[6];
-                    bzero(port, 6);
-                    char resta[MAX_MESSAGE_LENGHT];
-
-                    sscanf(missatge, "%[^'#']#%[^'#']#%s",resta, ipTCPRem, port);
-                    *portTCPrem = atoi(port);
-
-                    return LOCALITZACIO_ONLINE_LLIURE;
-                }
-                else if(missatge[2] == OFFLINE){
-                    // TODO : Localitzat incorrectament, escriure log
-                    // i anunciar a programa que no es pot parlar per que el client està offline
-                    return LOCALITZACIO_OFFLINE;
-                }
-                else if(missatge[2] == NO_EXISTEIX){
-                    // TODO : Localitzat incorrectament, escriure log
-                    // i anunciar a programa que no es pot parlar per que el client no existeix
-                    return LOCALITZACIO_NO_EXISTEIX;
-                }
-                else if(missatge[2] == ONLINE_OCUPAT){
-                    // TODO : Localitzat incorrectament, escriure log
-                    // i anunciar a programa que no es pot parlar per que el client ja està ocupat
-                    return LOCALITZACIO_ONLINE_OCUPAT;
-                }
-                else{
-                    // TODO : Missatge arrivat erroni, escriure log
-                    return MISSATGE_ERRONI;
-                }
-            }
-        }
-        else if(missatge[0] == LOCALITZACIO) { // Missatge de localització, pregunten per mi.
-
-            char jo[MAX_MESSAGE_LENGHT];
-            bzero(jo, MAX_MESSAGE_LENGHT);
-            // S'emplenen els camps usuari i dns per que es pugui respondre.
-            sscanf(missatge, "L%[^'@']@%[^'#']#%s", usuari, dns, jo);
-            return LOCALITZACIO_PETICIO;
-        }
-        else{
-            // TODO : Escriure log, s'ha de descartar el missatge
-        }
-    }
-
-}
-// FUNCTIONS REGISTRE
+/************************ FUNCTIONS REGISTRE *******************************/
 
 struct Registre create (char* _username){
     struct Registre r;
@@ -1032,12 +1099,15 @@ int equals(struct Registre * r1, struct Registre * r2){
     return (strcmp(r1->username, r2->username) || (strcmp(r1->ip, r2->ip) && r1->port == r2->port));
 }
 
-// FUNCTIONS DataSet
+/************************ FUNCTIONS DATASET *********************************/
 
 /**
  * Implementacions per l'estructura DataSet
  */
 void init(struct DataSet * ds){
+
+    ds->log = Log_CreaFitx(SERVER_LOG_FILE);
+
     int i;
     for(i=0; i < MAX_CLIENTS; i++){
         struct Registre r;

@@ -27,6 +27,7 @@
 #define PORT_DEFECTE        0
 #define ALL_IP              "0.0.0.0"
 #define TIMEOUT             3
+#define LOG_FILE            "xat2-client.log"
 
 /* Defineixo la posició del sockets a la taula de sockets */
 #define SCK_TCP             1
@@ -49,7 +50,7 @@
 void EvalResult(int res, const int *sockets, int nSockets);
 int getPort();
 int fiPrograma(int * LlistaSck, int nSockets, char * missatge);
-int conversa(int socketActiu, int * socketsEscoltant, const char * nickRemot);
+int conversa(int socketActiu, int * socketsEscoltant, const char * nickRemot, int logDescriptor);
 
 
 int main(int argc,char *argv[])
@@ -69,7 +70,6 @@ int main(int argc,char *argv[])
     char usuariPreguntador   [MAX_BUFFER];
     char instruccio          [MAX_BUFFER];
 
-
     // Inicialitzem tots els strings.
     bzero(ipRemota,             MAX_IP);
     bzero(ipServer,             MAX_IP);
@@ -87,6 +87,8 @@ int main(int argc,char *argv[])
     int portUDPLocal=0;
     char fi = '1';
     int nInstruccio = 0;
+
+    int logDescriptor=LUMI_GeneraLog(LOG_FILE);
 
     int socketsEscoltant[N_SOCKETS];
     int socketEscoltador;
@@ -139,7 +141,7 @@ int main(int argc,char *argv[])
     EvalResult(MI_getIpiPortDeSocket(socketsEscoltant[SCK_TCP], ipTcpLocal, &portTCPLocal), socketsEscoltant, N_SOCKETS);
     printf("/* SOCKET %i Ip i Port TCP configurat de manera local : %s -> %i\n", socketsEscoltant[SCK_TCP], ipTcpLocal, portTCPLocal);
 
-    int resultat = LUMI_EnviaPeticio((int *)&socketsEscoltant, SCK_UDP, nickname, domini, "", "", "", 0, REGISTRE, TIMEOUT);
+    int resultat = LUMI_EnviaPeticio((int *)&socketsEscoltant, SCK_UDP, nickname, domini, "", "", "", 0, REGISTRE, TIMEOUT, logDescriptor);
     if(resultat == REGISTRE_CORRECTE){
         // S'ha registrat correctament, escriure per pantalla.
         printf("/* Registrat contra el domini : %s\n", domini);
@@ -174,7 +176,7 @@ int main(int argc,char *argv[])
             nInstruccio = readFromKeyboard(instruccio, MAX_BUFFER);
             //printf("%d\n", nInstruccio);
             if(nInstruccio == 1 && instruccio[0] == FI_PROGRAMA){
-                int resultat = LUMI_EnviaPeticio((int *)&socketsEscoltant, SCK_UDP, nickname, domini, "", "", "", 0, DESREGISTRE, TIMEOUT);
+                int resultat = LUMI_EnviaPeticio((int *)&socketsEscoltant, SCK_UDP, nickname, domini, "", "", "", 0, DESREGISTRE, TIMEOUT, logDescriptor);
                 if(resultat == DESREGISTRE_CORRECTE){
                     // S'ha registrat correctament, escriure per pantalla.
                     printf("/* Desregistrat contra el domini : %s\n", domini);
@@ -188,7 +190,7 @@ int main(int argc,char *argv[])
             else {
                 // Extraiem les dades amb qui es vol connectar
                 sscanf(instruccio, "%[^'@']@%s", usuariPreguntador, dnsPreguntador);
-                int resultat = LUMI_EnviaPeticio((int *)&socketsEscoltant, SCK_UDP, nickname, domini, usuariPreguntador, dnsPreguntador, ipRemota, &portTCPRem, LOCALITZACIO, TIMEOUT);
+                int resultat = LUMI_EnviaPeticio((int *)&socketsEscoltant, SCK_UDP, nickname, domini, usuariPreguntador, dnsPreguntador, ipRemota, &portTCPRem, LOCALITZACIO, TIMEOUT, logDescriptor);
                 if(resultat == LOCALITZACIO_ONLINE_OCUPAT){
                     printf("/* El client %s del domini %s està online peró conversant amb un altre. \n", nickname, domini);
                 }
@@ -199,7 +201,7 @@ int main(int argc,char *argv[])
                     socketsEscoltant[SCK_TCP] = MI_DemanaConv(ipRemota, portTCPRem, ipTcpLocal, &portTCPLocal, usuariPreguntador, nickname);
                     EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS);
                     printf("%s\n", "s'inicia la conversa... crec que no hi arriva...");
-                    conversa(socketsEscoltant[SCK_TCP], socketsEscoltant, nickname);
+                    conversa(socketsEscoltant[SCK_TCP], socketsEscoltant, nickname, logDescriptor);
 
                     // Es Reconfigura el socket TCP i s'emplenen els camps de ip i port locals.
                     socketsEscoltant[SCK_TCP] = MI_IniciaEscPetiRemConv(PORT_DEFECTE);
@@ -223,10 +225,10 @@ int main(int argc,char *argv[])
         }
         // Si el socket actiu és el socket udp com que no estem conversant acceptem la conversa.
         else if(socketActiu == socketsEscoltant[SCK_UDP]) {
-            int peticio = LUMI_ProcessaClient(socketActiu, missatge, usuariPreguntador, dnsPreguntador, "", 0);
+            int peticio = LUMI_ProcessaClient(socketActiu, missatge, usuariPreguntador, dnsPreguntador, "", 0, logDescriptor);
             if(peticio == LOCALITZACIO_PETICIO){
                 // S'ha de retornar el missatge : AL0preguntador@dnsPreguntador#IP#PORT_TCP
-                resultat = LUMI_ResponLocalitzacio(socketsEscoltant[SCK_UDP], ONLINE_LLIURE, usuariPreguntador, dnsPreguntador, ipTcpLocal, portTCPLocal);
+                resultat = LUMI_ResponLocalitzacio(socketsEscoltant[SCK_UDP], ONLINE_LLIURE, usuariPreguntador, dnsPreguntador, ipTcpLocal, portTCPLocal, logDescriptor);
             }
         }
         // Si el socket actiu no és un teclat i no és una petició TCP fem un accept.
@@ -236,7 +238,7 @@ int main(int argc,char *argv[])
             socketsEscoltant[SCK_TCP] = MI_AcceptaConv(socketActiu, ipRemota, &port, ALL_IP, &portTCPLocal, adrecaMI, nicknameRemot);
             estat = CONNECTAT;
             EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS);
-            conversa(socketsEscoltant[SCK_TCP], socketsEscoltant, nicknameRemot);
+            conversa(socketsEscoltant[SCK_TCP], socketsEscoltant, nicknameRemot, logDescriptor);
             // Es Reconfigura el socket TCP i s'emplenen els camps de ip i port locals.
             socketsEscoltant[SCK_TCP] = MI_IniciaEscPetiRemConv(PORT_DEFECTE);
             EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS); // Evaluem el resultat de l'anterior instrucció
@@ -249,12 +251,12 @@ int main(int argc,char *argv[])
         // -------------------------
         estat = DESCONNECTAT;
     }
-
+    LUMI_TancaLog(logDescriptor);
     return (0);
 
  }
 
-int conversa(int socketActiu, int * socketsEscoltant, const char * nickRemot){
+int conversa(int socketActiu, int * socketsEscoltant, const char * nickRemot, int logDescriptor){
     printf("/*-------------------------------------------------------------------*/\n");
     printf("/* S'HA ESTABLERT UNA CONVERSA TCP AMB %s\n", nickRemot);
     printf("/* Parla o espera que et parlin...\n");
@@ -276,10 +278,10 @@ int conversa(int socketActiu, int * socketsEscoltant, const char * nickRemot){
         else if(socketActiu == socketsEscoltant[SCK_UDP]){
             char usuariPreguntador[MAX_BUFFER];
             char dnsPreguntador[MAX_BUFFER];
-            int peticio = LUMI_ProcessaClient(socketsEscoltant[SCK_UDP], missatge, usuariPreguntador, dnsPreguntador, "", 0);
+            int peticio = LUMI_ProcessaClient(socketsEscoltant[SCK_UDP], missatge, usuariPreguntador, dnsPreguntador, "", 0, logDescriptor);
             if(peticio == LOCALITZACIO_PETICIO){
                 // S'ha de retornar el missatge : AL3preguntador@dnsPreguntador
-                int resultat = LUMI_ResponLocalitzacio(socketsEscoltant[SCK_UDP], ONLINE_OCUPAT, usuariPreguntador, dnsPreguntador, "", 0);
+                int resultat = LUMI_ResponLocalitzacio(socketsEscoltant[SCK_UDP], ONLINE_OCUPAT, usuariPreguntador, dnsPreguntador, "", 0, logDescriptor);
                 EvalResult(resultat, socketsEscoltant, N_SOCKETS);
                 if(resultat < 0){
                     resultatAccio = 0;
