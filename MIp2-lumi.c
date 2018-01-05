@@ -715,10 +715,11 @@ int LUMI_EnviaAMI(int sck, const char * dns, const char * missatge){
 }
 
 int LUMI_EscriuLog(int descriptor, char * prefix, char * cadena){
-    char final[strlen(cadena) + strlen(prefix) + 1];
-    bzero(final, strlen(cadena) + strlen(prefix) + 1);
+    char final[strlen(cadena) + strlen(prefix) + 2];
+    bzero(final, strlen(cadena) + strlen(prefix) + 2);
     strcpy(final, prefix);
     strcat(final, cadena);
+    strcat(final, "\n");
     Log_Escriu(descriptor, final);
 }
 
