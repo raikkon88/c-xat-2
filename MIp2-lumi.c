@@ -834,27 +834,34 @@ int LUMI_ResponLocalitzacio(int socket, int codi, const char * usuariPreguntador
 
     bzero(missatge, TOTAL_LENGHT_MESSAGE);
     bzero(direccio, TOTAL_LENGHT_MESSAGE);
-
+    //printf("%s\n",missatge);
     //strcpy(missatge, "AL");
     missatge[0] = ACCEPTAT_MISSATGE;
+    //printf("%s\n",missatge);
     missatge[1] = LOCALITZACIO;
-    char codiString[2];
-    sprintf(codiString, "%d", codi);
-    strcat(missatge, codiString);
-
+    //printf("%s\n",missatge);
+    missatge[2] = codi;
+    //printf("%s\n",missatge);
     MontaAdrecaMi(direccio, dnsPreguntador, usuariPreguntador);
 
     if(codi == ONLINE_OCUPAT){
         strcat(missatge, direccio);
+        //printf("%s\n",missatge);
     }
     else if(codi == ONLINE_LLIURE){
         strcat(missatge, direccio);
+        //printf("%s\n",missatge);
         missatge[strlen(missatge)] = SEPARADOR;
+        //printf("%s\n",missatge);
         strcat(missatge, ip);
+        //printf("%s\n",missatge);
         missatge[strlen(missatge)] = SEPARADOR;
+        //printf("%s\n",missatge);
         char portString[6];
-        sprintf(portString, "%d", portTCP);
+        //sprintf(portString, "%d", portTCP);
         strcat(missatge, portString);
+        //printf("%s\n",missatge);
+        //printf("%s\n","????????????????????????????????????????");
     }
     else{
         return -1;
