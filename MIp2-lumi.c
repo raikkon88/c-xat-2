@@ -782,27 +782,6 @@ int LUMI_PeticioRegistre(int Sck, const char *usuari, char * domini){ //, const 
 	strcat(SeqBytes, usuari);
 
     return LUMI_EnviaAMI(Sck, domini, SeqBytes);
-
-	// // enviar la peticio
-	// int Byteenviats =  UDP_EnviaA(Sck,IPloc,portUDPloc,SeqBytes,strlen(SeqBytes));
-	// if(Byteenviats == -1 ){
-	// 	printf(" error de enviar peticio registre al server \n");
-	// 	return -1;
-	// }
-    //
-    // return 0;
-
-	// int n = UDP_RepDe(Sck, ipRemitent, &portUDPloc, SeqBytes, TOTAL_LENGHT_MESSAGE);
-	// if( n ==-1) printf(" error de rebre el paquet AR \n");
-	// if(strcmp(SeqBytes,"AR0") == 0){
-	// 	return 1;
-	// }
-    // else if(strcmp(SeqBytes, "AR1") == 0){
-    //     return -2;
-    // }
-    // else{
-    //     return -1;
-    // }
 }
 
 
@@ -816,35 +795,12 @@ int LUMI_PeticioDesregistre(int Sck, const char *usuari, char * domini){
 	strcat(SeqBytes, usuari);
 
     return LUMI_EnviaAMI(Sck, domini, SeqBytes);
-
-	// // enviar la peticio
-	// int Byteenviats =  UDP_EnviaA(Sck,IPloc,portUDPloc,SeqBytes,strlen(SeqBytes));
-	// if(Byteenviats == -1 ){
-	// 	printf(" error de enviar peticio de desregistre al server \n");
-	// 	return -1;
-	// }
-    // bzero(SeqBytes, MAX_MESSAGE_LENGHT);
-	// char IPnode[MAX_IP_LENGTH];
-    // bzero(IPnode, MAX_IP_LENGTH);
-	// int portNode;
-    //
-	// int n = UDP_RepDe(Sck, IPnode, &portNode, SeqBytes, TOTAL_LENGHT_MESSAGE);
-	// if( n ==-1) printf(" error de rebre el paquet AR \n");
-	// if(strcmp(SeqBytes,"AD0") == 0){ // s'ha desresgistrat correctament
-	// 	return 1;
-	// }
-    // else if(strcmp(SeqBytes, "AD1") == 0){
-    //     return -2;
-    // }
-    // else{
-    //     return -1;
-    // }
 }
-
 
 int LUMI_PeticioLocalitzacio(int Sck, const char *nickFrom, const char * dnsFrom, const char * nickTo, const char *dnsTo){//, int portUDPloc){
 
 	char SeqBytes[TOTAL_LENGHT_MESSAGE];
+
     char MI_preguntador[MAX_LINIA];
     char MI_preguntat[MAX_LINIA];
 
@@ -852,22 +808,14 @@ int LUMI_PeticioLocalitzacio(int Sck, const char *nickFrom, const char * dnsFrom
     bzero(MI_preguntador, MAX_LINIA);
     bzero(MI_preguntat, MAX_LINIA);
 
-    MontaAdrecaMi(MI_preguntador, nickFrom, dnsFrom);
-    MontaAdrecaMi(MI_preguntat, nickTo, dnsTo);
+    MontaAdrecaMi(MI_preguntador, dnsFrom, nickFrom);
+    MontaAdrecaMi(MI_preguntat, dnsTo, nickTo);
 
-	strcpy(SeqBytes, (char*)LOCALITZACIO);
+    SeqBytes[0] = LOCALITZACIO;
 	strcat(SeqBytes, MI_preguntador);
-	strcat(SeqBytes, (char*)SEPARADOR); // separador
+    SeqBytes[strlen(SeqBytes)] = SEPARADOR;
 	strcat(SeqBytes, MI_preguntat);
 
-    //char dns[MAX_LINIA];
-    //char usuari[MAX_LINIA];
-    //bzero(dns, MAX_LINIA);
-    //bzero(usuari, MAX_LINIA);
-
-    // TODO : S'ha de muntar la string amb l'usuari.
-
-    //LUMI_UsuariIDnsDeMi(MI_preguntador, dns, usuari);
     LUMI_EnviaAMI(Sck, dnsTo, SeqBytes);
 }
 
@@ -907,8 +855,6 @@ int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns){
 
     char ipRem[MAX_IP_LENGTH] = "";
 	int  portRem = 0;
-	// char missatge[MAX_MESSAGE_LENGHT];
-	// bzero(missatge, MAX_MESSAGE_LENGHT);
     int longitud = UDP_RepDe(sck, ipRem, &portRem, missatge, MAX_MESSAGE_LENGHT);
     printf("##### HA ARRIBAT -> %s\n", missatge);
     int resultatAccio = 0;
