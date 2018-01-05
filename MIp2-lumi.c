@@ -350,7 +350,7 @@ int LUMI_ContestaClientMateixDomini(int sck, char * nickFrom, int codiResposta, 
 
 int LUMI_GeneraRespostaLocalitzacio(int codi, char* contingut, char * resposta){
     char codiStr[3];
-    sprintf(codiStr, "%c%c%d",ACCEPTAT_MISSATGE, LOCALITZACIO, codi);
+    sprintf(codiStr, "%c%c%c",ACCEPTAT_MISSATGE, LOCALITZACIO, codi);
     bzero(resposta, TOTAL_LENGHT_MESSAGE);
     strcat(resposta, codiStr);
     strcat(resposta, contingut);
@@ -734,10 +734,6 @@ int LUMI_EnviaPeticio(const int * LlistaSck, int socketDeLlista, char * nickFrom
         }
         else if(tipusPeticio == LOCALITZACIO){
             // Envia la petició de localització
-            printf("%s\n", nickFrom);
-            printf("%s\n", dnsFrom);
-            printf("%s\n", nickTo);
-            printf("%s\n", dnsTo);
             resultat = LUMI_PeticioLocalitzacio(LlistaSck[socketDeLlista], nickFrom, dnsFrom, nickTo, dnsTo);
         }
         else{

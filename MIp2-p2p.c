@@ -180,7 +180,7 @@ int main(int argc,char *argv[])
                     printf("/* Desregistrat contra el domini : %s\n", domini);
                 }
                 else {
-                    printf("/- Hi ha hagut un problema al desregistrar amb el domini : %s\n", domini);
+                    printf("/* Hi ha hagut un problema al desregistrar amb el domini : %s\n", domini);
                 }
                 fi = FI_PROGRAMA;
                 fiPrograma(socketsEscoltant, N_SOCKETS, "Has finalitzat el programa, bye bye!!");
