@@ -252,15 +252,16 @@ int conversa(int socketActiu, int * socketsEscoltant, const char * nickRemot){
     while(resultatAccio > 0){
         char missatge[MAX_BUFFER];
         bzero(missatge, MAX_BUFFER);
-        socketActiu = MI_HaArribatLinia(socketsEscoltant[SCK_TCP]);
-        if(socketActiu == TECLAT){
+        //socketActiu = MI_HaArribatLinia(socketsEscoltant[SCK_TCP]);
+        socketActiu = LUMI_HaArribatAlgunaCosa(socketsEscoltant, N_SOCKETS);
+        if(socketActiu == socketsEscoltant[TECLAT]){
             EvalResult(readFromKeyboard(missatge, MAX_BUFFER), socketsEscoltant, N_SOCKETS);
             if(strcmp(missatge,"$")!=1) break;
             resultatAccio = MI_EnviaLinia(socketsEscoltant[SCK_TCP], missatge);
             EvalResult(resultatAccio, socketsEscoltant, N_SOCKETS);
         }
         // Estem conversant, per tant hem de contestar amb un codi en concret.
-        else if(socketActiu == SCK_UDP){
+        else if(socketActiu == socketsEscoltant[SCK_UDP]){
             char usuariPreguntador[MAX_BUFFER];
             char dnsPreguntador[MAX_BUFFER];
             int peticio = LUMI_ProcessaClient(socketsEscoltant[SCK_UDP], missatge, usuariPreguntador, dnsPreguntador, "", 0);
@@ -271,7 +272,6 @@ int conversa(int socketActiu, int * socketsEscoltant, const char * nickRemot){
                 if(resultat < 0){
                     resultatAccio = 0;
                 }
-
             }
         }
         else{
