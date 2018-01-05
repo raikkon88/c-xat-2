@@ -188,7 +188,7 @@ int main(int argc,char *argv[])
                     printf("/* El client %s del domini %s està online peró conversant amb un altre. \n", nickname, domini);
                 }
                 else if(resultat == LOCALITZACIO_ONLINE_LLIURE){
-                    printf("/* Realitzant la connexió amb el client %s del domini %s a la ip %s, port %i. \n", nickname, domini, ipRemota, portTCPRem);
+                    printf("/* Connectant amb %s@%s a la ip %s, port %i. \n", nickname, domini, ipRemota, portTCPRem);
                     estat = CONNECTAT;
                     socketsEscoltant[SCK_TCP] = MI_DemanaConv(ipRemota, portTCPRem, ipTcpLocal, &portTCPLocal, usuariPreguntador, nickname);
                     EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS);
