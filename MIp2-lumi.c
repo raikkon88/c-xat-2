@@ -720,7 +720,7 @@ int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc)
 }
 
 /* */
-int LUMI_EnviaPeticio(const int * LlistaSck, int socketDeLlista, char * nickFrom, char * dnsFrom, char * nickTo, char * dnsTo, char tipusPeticio, int timeout){
+int LUMI_EnviaPeticio(const int * LlistaSck, int socketDeLlista, char * nickFrom, char * dnsFrom, char * nickTo, char * dnsTo, char * ipTCPRem, int * portTCPRem, char tipusPeticio, int timeout){
     int nombreReenviaments = 0;
     int socket = -2;
     int resultat = 0;
@@ -746,11 +746,8 @@ int LUMI_EnviaPeticio(const int * LlistaSck, int socketDeLlista, char * nickFrom
         }
 
         // Evalúa si ha arrivat alguna cosa dins del timeout.
-        // TODO : Provar el timeout.
         socket = HaArribatAlgunaCosaEnTemps(LlistaSck, sizeof(LlistaSck), timeout);
-        printf("%i\n", socket);
         nombreReenviaments++;
-        // return socket;
     }
 
     // Evaluació dels possibles errors de la funció.
@@ -764,7 +761,7 @@ int LUMI_EnviaPeticio(const int * LlistaSck, int socketDeLlista, char * nickFrom
             printf("S'ha rebut resposta del servidor \n");
             char missatge[MAX_MESSAGE_LENGHT];
             bzero(missatge, MAX_MESSAGE_LENGHT);
-            return LUMI_ProcessaClient(socket, missatge, "", "");
+            return LUMI_ProcessaClient(socket, missatge, "", "", ipTCPRem, portTCPRem);
             // Escriure log, registre ok
             // Mostrar per pantalla.
         }
@@ -870,7 +867,7 @@ int LUMI_ResponLocalitzacio(int socket, int codi, const char * usuariPreguntador
     return LUMI_EnviaAMI(socket, dnsPreguntador, missatge);
 }
 
-int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns){
+int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns, char * ipTCPRem, int * portTCPrem){
 
     char ipRem[MAX_IP_LENGTH] = "";
 	int  portRem = 0;
@@ -924,6 +921,10 @@ int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns){
                     //      AL0preguntador@dnsPreguntador#IP#PORT_TCP
                     // S'ha d'extreure IP i PORT_TCP
                     // S'ha de generar un socket TCP amb el programa MI i s'ha de connectar amb el client
+                    char port[6];
+                    bzero(port, 6);
+                    sscanf(missatge, "#%[^'#']#%s", ipTCPRem, port);
+                    *portTCPrem = atoi(port);
                     return LOCALITZACIO_ONLINE_LLIURE;
                 }
                 else if(missatge[2] == OFFLINE){
