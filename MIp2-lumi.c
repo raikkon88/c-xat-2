@@ -837,14 +837,13 @@ int UDP_RepDe(int Sck, char *IPrem, int *portUDPrem, char *SeqBytes, int LongSeq
 		close(Sck);
 		return -1;
 	}
-
-    printf("S'ha rebut de %s,%i -> %s\n", IPrem, (int)portUDPrem, SeqBytes);
-
-
     bzero(IPrem, MAX_IP_LENGTH);
 	strcpy(IPrem,inet_ntoa(adrrem.sin_addr));
 	*portUDPrem=ntohs(adrrem.sin_port);
-	return bllegit -1 ; // Se li resta el '\0'
+
+    printf("S'ha rebut de %s,%i -> %s que porten %i caracters i shan llegit %i\n", IPrem, (int)portUDPrem, SeqBytes, strlen(SeqBytes), bllegit);
+
+	return bllegit -1; // Se li resta el '\0'
 }
 
 /* S’allibera (s’esborra) el socket UDP d’identificador “Sck”.            */
