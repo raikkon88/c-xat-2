@@ -189,10 +189,9 @@ int main(int argc,char *argv[])
                 else if(resultat == LOCALITZACIO_ONLINE_LLIURE){
                     printf("/* Realitzant la connexió amb el client %s del domini %s a la ip %s, port %i. \n", nickname, domini, ipRemota, portTCPRem);
                     estat = CONNECTAT;
-                    socketActiu = MI_DemanaConv(ipRemota, portTCPRem, ipTcpLocal, &portTCPLocal, usuariPreguntador, nickname);
-                    EvalResult(socketActiu, socketsEscoltant, N_SOCKETS);
-                    socketsEscoltant[SCK_TCP] = (int)socketActiu;
-                    conversa(socketActiu, socketsEscoltant);
+                    socketsEscoltant[SCK_TCP] = MI_DemanaConv(ipRemota, portTCPRem, ipTcpLocal, &portTCPLocal, usuariPreguntador, nickname);
+                    EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS);
+                    conversa(socketsEscoltant[SCK_TCP], socketsEscoltant);
 
                 }
                 else if(resultat == LOCALITZACIO_NO_EXISTEIX){
@@ -217,11 +216,10 @@ int main(int argc,char *argv[])
         // Si el socket actiu no és un teclat i no és una petició TCP fem un accept.
         else {
             printf("Esta fent una petició TCP\n");
-            socketActiu = MI_AcceptaConv(socketActiu, ipRemota, &port, ALL_IP, &portTCPLocal, adrecaMI, nicknameRemot);
+            socketsEscoltant[SCK_TCP] = MI_AcceptaConv(socketActiu, ipRemota, &port, ALL_IP, &portTCPLocal, adrecaMI, nicknameRemot);
             estat = CONNECTAT;
-            EvalResult(socketActiu, socketsEscoltant, N_SOCKETS);
-            socketsEscoltant[SCK_TCP] = socketActiu;
-            conversa(socketActiu, socketsEscoltant);
+            EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS);
+            conversa(socketsEscoltant[SCK_TCP], socketsEscoltant);
         }
         // -------------------------
         estat = DESCONNECTAT;
