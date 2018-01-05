@@ -1,4 +1,2 @@
-a.com
-a
+b.com
 b
-c
