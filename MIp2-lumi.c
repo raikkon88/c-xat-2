@@ -1,4 +1,4 @@
-REGISTRE/**************************************************************************/
+/**************************************************************************/
 /*                                                                        */
 /* P2 - MI amb sockets TCP/IP - Part II                                   */
 /* Fitxer lumi.c que implementa la capa d'aplicació de LUMI, sobre la     */
@@ -18,19 +18,8 @@ REGISTRE/***********************************************************************
 /* Definició de constants, p.e., #define MAX_LINIA 150                    */
 #define MIDA_RESPOSTA_REGISTRE      3
 #define MAX_LINIA                   200
+#define SEPARADOR                   '#'
 
-#define ACCEPTAT_MISSATGE           'A'
-#define REGISTRE                    'R'
-#define DESREGISTRE                 'D'
-#define LOCALITZACIO                'L'
-
-#define CORRECTE                    0
-#define INCORRECTE                  1
-
-#define ONLINE_LLIURE               0
-#define OFFLINE                     1
-#define NO_EXISTEIX                 2
-#define ONLINE_OCUPAT               3
 
 // #define AL0                  0
 // #define AL1                  1
@@ -53,7 +42,7 @@ int UDP_TrobaAdrSockRem(int Sck, char *IPrem, int *portUDPrem);
 int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temps);
 int ResolDNSaIP(const char *NomDNS, char *IP);
 void LUMI_UsuariIDnsDeMi(const char *direccio, char * dns, char * username);
-void MontaAdrecaMi(char * direccio, char * dns, char * username);
+void MontaAdrecaMi(char * direccio, const char * dns, const char * username);
 int Log_CreaFitx(const char *NomFitxLog);
 int Log_Escriu(int FitxLog, const char *MissLog);
 int Log_TancaFitx(int FitxLog);
@@ -91,6 +80,7 @@ int LUMI_inicialitza_servidor(struct DataSet * d, char * filename, char * ip, in
 
 void LUMI_crea_resposta_registre(char * resposta, char tipusResposta, int valorResposta){
     bzero(resposta, MIDA_RESPOSTA_REGISTRE);
+    //sprintf(resposta, "%c%c%i", ACCEPTAT_MISSATGE, tipusResposta, valorResposta);
     sprintf(resposta, "%c%c%i", ACCEPTAT_MISSATGE, tipusResposta, valorResposta);
 }
 
@@ -233,7 +223,9 @@ int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struc
         }
     }
     else { // El missatge s'ha de reenviar a un altre servidor.
-        resultatAccio = LUMI_EnviaAMI(sck, nickTo, dnsTo, rebut);
+        // TODO S'ha de canviar el nickTo i treure'l, ha d'anar inclós a dins del missatge.
+        //resultatAccio = LUMI_EnviaAMI(sck, nickTo, dnsTo, rebut);
+        resultatAccio = LUMI_EnviaAMI(sck, dnsTo, rebut);
         // TODO : Escriure Log.
     }
 }
@@ -298,12 +290,12 @@ int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
             else { // Si no està online :
                 if(strcmp(dnsFrom, dnsTo) == 0){
                     // El servidor pot gestionar la resposta directa cap al client.
-                    resultatAccio = LUMI_ContestaClientMateixDomini(sck, nickFrom, AL1, d);
+                    resultatAccio = LUMI_ContestaClientMateixDomini(sck, nickFrom, OFFLINE, d);
                     // TODO : Escriure Log
                 }
                 else{
                     // Contesta al servidor anterior
-                    resultatAccio = LUMI_ContestaServidor(sck, nickFrom, dnsFrom, AL1);
+                    resultatAccio = LUMI_ContestaServidor(sck, nickFrom, dnsFrom, OFFLINE);
                     // TODO : Escriure Log
                 }
             }
@@ -311,28 +303,28 @@ int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
         else { // Si el client no existeix
             if(strcmp(dnsFrom, dnsTo) == 0){ // (AL2)
                 // El servidor pot gestionar la resposta directa cap al client.
-                resultatAccio = LUMI_ContestaClientMateixDomini(sck, nickFrom, AL2, d);
+                resultatAccio = LUMI_ContestaClientMateixDomini(sck, nickFrom, NO_EXISTEIX, d);
                 // TODO : Escriure Log
             }
             else{
                 // Contesta al servidor anterior
-                resultatAccio = LUMI_ContestaServidor(sck, nickFrom, dnsFrom, AL2);
+                resultatAccio = LUMI_ContestaServidor(sck, nickFrom, dnsFrom, NO_EXISTEIX);
                 // TODO : Escriure Log
             }
         }
     }
     else { // No sóc el domini destí (Bridge)
-        resultatAccio = LUMI_EnviaAMI(sck, nickTo, dnsTo, rebut);
+        resultatAccio = LUMI_EnviaAMI(sck, dnsTo, rebut);
         // TODO : Escriure Log
     }
 }
 
-int LUMI_ContestaServidor(int sck, char * nickFrom, char * dnsFrom, int codi){
+int LUMI_ContestaServidor(int sck, const char * nickFrom, const char * dnsFrom, int codi){
     char direccio[MAX_LINIA];
     MontaAdrecaMi(direccio, nickFrom, dnsFrom);
     char resposta[MAX_LINIA];
     LUMI_GeneraRespostaLocalitzacio(codi, direccio, resposta);
-    return LUMI_EnviaAMI(sck, nickFrom, dnsFrom, resposta);
+    return LUMI_EnviaAMI(sck, dnsFrom, resposta);
 }
 
 int LUMI_ContestaClientMateixDomini(int sck, char * nickFrom, int codiResposta, struct DataSet * d){
@@ -367,8 +359,7 @@ int LUMI_getIpiPortDeSocket(int sck, char * ip, int * port){
     int addrlen = sizeof(sin);
     int local_port = 0;
     if(getsockname(sck, (struct sockaddr *)&sin, &addrlen) == 0 &&
-       sin.sin_family == AF_INET &&
-       addrlen == sizeof(sin))
+       sin.sin_family == AF_INET && addrlen == sizeof(sin))
     {
         *port = (int)ntohs(sin.sin_port);
     }
@@ -392,14 +383,14 @@ int LUMI_getIpiPortDeSocket(int sck, char * ip, int * port){
 }
 
 
-void MontaAdrecaMi(char * direccio, char * dns, char * username){
+void MontaAdrecaMi(char * direccio, const char * dns, const char * username){
     bzero(direccio, MAX_LINIA);
     strcpy(direccio, username);
     strcat(direccio, "@");
     strcat(direccio, dns);
 }
 
-int LUMI_EnviaAMI(int sck, char * usuari, char * dns, char * missatge){
+int LUMI_EnviaAMI(int sck, const char * dns, const char * missatge){
 
     char ipServ[MAX_IP_LENGTH];
     bzero(ipServ, MAX_IP_LENGTH);
@@ -467,6 +458,9 @@ int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes,
 {
     //printf("S'esta enviant %s\n", SeqBytes);
 
+    //printf("%s\n", IPrem);
+    //printf("%i\n", portUDPrem);
+
 	struct sockaddr_in adrrem;
 	adrrem.sin_family=AF_INET;
 	adrrem.sin_port=htons(portUDPrem);
@@ -505,7 +499,7 @@ int UDP_RepDe(int Sck, char *IPrem, int *portUDPrem, char *SeqBytes, int LongSeq
 
 	//rebre el missatge
 	int bllegit;
-	if((bllegit=recvfrom(Sck,SeqBytes,LongSeqBytes,0,(struct sockaddr*)&adrrem,&ladrrem))==-1)
+	if((bllegit=recvfrom(Sck,SeqBytes,LongSeqBytes,MSG_OOB,(struct sockaddr*)&adrrem,&ladrrem))==-1)
 	{
 		perror("Error recvfrom\n");
 		close(Sck);
@@ -606,6 +600,10 @@ int UDP_TrobaAdrSockRem(int Sck, char *IPrem, int *portUDPrem)
 
 }
 
+int LUMI_HaArribatAlgunaCosa(const int * socketsEscoltant, int nSockets){
+    return HaArribatAlgunaCosaEnTemps(socketsEscoltant, nSockets, -1);
+}
+
 /* Examina simultàniament durant "Temps" (en [ms] els sockets (poden ser  */
 /* TCP, UDP i stdin) amb identificadors en la llista “LlistaSck” (de      */
 /* longitud “LongLlistaSck” sockets) per saber si hi ha arribat alguna    */
@@ -629,22 +627,23 @@ int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temp
 		}
 	}
 
-	struct timeval timeout;
-	timeout.tv_sec = 0;
-  	timeout.tv_usec = Temps*1000;
-
 	int selection;
 	if(Temps == -1){
-		selection = select(descmax+1, &conjunt, 0, 0, 0);
-	}else{
-		selection = select(descmax+1, &conjunt, 0, 0, &timeout);
+		selection = select(descmax+1, &conjunt, NULL, NULL, NULL);
+	}
+    else{
+        struct timeval timeout;
+    	timeout.tv_sec = Temps;
+      	timeout.tv_usec = 0;
+		selection = select(descmax+1, &conjunt, NULL, NULL, &timeout);
 	}
 
 	if (selection > 0){
 		for(i = 0;i < LongLlistaSck; i++){
 			if (FD_ISSET(LlistaSck[i], &conjunt)) return LlistaSck[i];
 		}
-	}if(selection == 0){ // ha passat timeout
+	}
+    if(selection == 0){ // ha passat timeout
 		return -2;
 	}
 	return -1;
@@ -712,109 +711,217 @@ int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc)
 	return UDP_CreaSock(IPloc,portUDPloc);
 }
 
-int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc){
+/* */
+int LUMI_EnviaPeticio(const int * LlistaSck, int socketDeLlista, char * nickFrom, char * dnsFrom, char * nickTo, char * dnsTo, char tipusPeticio, int timeout){
+    int nombreReenviaments = 0;
+    int socket = -2;
+    int resultat = 0;
+    while(nombreReenviaments < MAX_NOMBRE_RETRANSMISSIONS && socket == -2){
+        if(tipusPeticio == REGISTRE){
+            // Envia la petició de registre
+            resultat = LUMI_PeticioRegistre(LlistaSck[socketDeLlista], nickFrom, dnsFrom);
+        }
+        else if(tipusPeticio == DESREGISTRE){
+            // Envia la petició de desregitre
+            resultat = LUMI_PeticioDesregistre(LlistaSck[socketDeLlista], nickFrom, dnsFrom);
+        }
+        else if(tipusPeticio == LOCALITZACIO){
+            // Envia la petició de localització
+            resultat = LUMI_PeticioLocalitzacio(LlistaSck[socketDeLlista], nickFrom, dnsFrom, nickTo, dnsTo);
+        }
+        else{
+            resultat = -1;
+        }
+
+        if(resultat < 0){
+            return resultat;
+        }
+
+        // Evalúa si ha arrivat alguna cosa dins del timeout.
+        // TODO : Provar el timeout.
+        socket = HaArribatAlgunaCosaEnTemps(LlistaSck, sizeof(LlistaSck), timeout);
+        printf("%i\n", socket);
+        nombreReenviaments++;
+        // return socket;
+    }
+
+    // Evaluació dels possibles errors de la funció.
+    if(nombreReenviaments == MAX_NOMBRE_RETRANSMISSIONS){
+        // Timeout expirat , escriure log
+        // Mostrar per pantalla
+        printf("S'ha sobrepassat el nombre de reenviaments\n");
+    }
+    else{
+        if(socket >= 0){ // S'ha rebut la resposta
+            printf("S'ha rebut resposta del servidor \n");
+            char missatge[MAX_MESSAGE_LENGHT];
+            bzero(missatge, MAX_MESSAGE_LENGHT);
+            return LUMI_ProcessaClient(socket, missatge, "", "");
+            // Escriure log, registre ok
+            // Mostrar per pantalla.
+        }
+        else { // Hi ha hagut un error en la resposta.
+            printf("Hi ha hagut error en l'enviament \n");
+            // Escriure Log, registre erroni.
+            // Mostrar per pantalla
+        }
+    }
+
+}
+
+int LUMI_PeticioRegistre(int Sck, const char *usuari, char * domini){ //, const char *IPloc, int portUDPloc){
 
 	//fem la peticio de registre
 	char SeqBytes[TOTAL_LENGHT_MESSAGE];
+    //char ipRemitent[MAX_IP_LENGTH];
+
+    bzero(SeqBytes, TOTAL_LENGHT_MESSAGE);
+    //bzero(ipRemitent, MAX_IP_LENGTH);
 
 	strcpy(SeqBytes, "R");
 	strcat(SeqBytes, usuari);
 
-	// enviar la peticio
-	int Byteenviats =  UDP_EnviaA(Sck,IPloc,portUDPloc,SeqBytes,strlen(SeqBytes));
-	if(Byteenviats == -1 ){
-		printf(" error de enviar peticio registre al server \n");
-		return -1;
-	}
+    return LUMI_EnviaAMI(Sck, domini, SeqBytes);
 
-    bzero(SeqBytes, MAX_MESSAGE_LENGHT);
-    // Rebre resposta del servidor :
-    char ipRemitent[MAX_IP_LENGTH];
-    bzero(ipRemitent, MAX_IP_LENGTH);
-	int n = UDP_RepDe(Sck, ipRemitent, &portUDPloc, SeqBytes, TOTAL_LENGHT_MESSAGE);
-	if( n ==-1) printf(" error de rebre el paquet AR \n");
-	if(strcmp(SeqBytes,"AR0") == 0){
-		return 1;
-	}
-    else if(strcmp(SeqBytes, "AR1") == 0){
-        return -2;
-    }
-    else{
-        return -1;
-    }
+	// // enviar la peticio
+	// int Byteenviats =  UDP_EnviaA(Sck,IPloc,portUDPloc,SeqBytes,strlen(SeqBytes));
+	// if(Byteenviats == -1 ){
+	// 	printf(" error de enviar peticio registre al server \n");
+	// 	return -1;
+	// }
+    //
+    // return 0;
+
+	// int n = UDP_RepDe(Sck, ipRemitent, &portUDPloc, SeqBytes, TOTAL_LENGHT_MESSAGE);
+	// if( n ==-1) printf(" error de rebre el paquet AR \n");
+	// if(strcmp(SeqBytes,"AR0") == 0){
+	// 	return 1;
+	// }
+    // else if(strcmp(SeqBytes, "AR1") == 0){
+    //     return -2;
+    // }
+    // else{
+    //     return -1;
+    // }
 }
 
 
-int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc){
+//int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc){
+int LUMI_PeticioDesregistre(int Sck, const char *usuari, char * domini){
 
-
-	char SeqBytes[TOTAL_LENGHT_MESSAGE];
+    char SeqBytes[TOTAL_LENGHT_MESSAGE];
+    bzero(SeqBytes, TOTAL_LENGHT_MESSAGE);
 
 	strcpy(SeqBytes, "D");
 	strcat(SeqBytes, usuari);
 
-	// enviar la peticio
-	int Byteenviats =  UDP_EnviaA(Sck,IPloc,portUDPloc,SeqBytes,strlen(SeqBytes));
-	if(Byteenviats == -1 ){
-		printf(" error de enviar peticio de desregistre al server \n");
-		return -1;
-	}
-    bzero(SeqBytes, MAX_MESSAGE_LENGHT);
-	char IPnode[MAX_IP_LENGTH];
-    bzero(IPnode, MAX_IP_LENGTH);
-	int portNode;
+    return LUMI_EnviaAMI(Sck, domini, SeqBytes);
 
-	int n = UDP_RepDe(Sck, IPnode, &portNode, SeqBytes, TOTAL_LENGHT_MESSAGE);
-	if( n ==-1) printf(" error de rebre el paquet AR \n");
-	if(strcmp(SeqBytes,"AD0") == 0){ // s'ha desresgistrat correctament
-		return 1;
-	}
-    else if(strcmp(SeqBytes, "AD1") == 0){
-        return -2;
+	// // enviar la peticio
+	// int Byteenviats =  UDP_EnviaA(Sck,IPloc,portUDPloc,SeqBytes,strlen(SeqBytes));
+	// if(Byteenviats == -1 ){
+	// 	printf(" error de enviar peticio de desregistre al server \n");
+	// 	return -1;
+	// }
+    // bzero(SeqBytes, MAX_MESSAGE_LENGHT);
+	// char IPnode[MAX_IP_LENGTH];
+    // bzero(IPnode, MAX_IP_LENGTH);
+	// int portNode;
+    //
+	// int n = UDP_RepDe(Sck, IPnode, &portNode, SeqBytes, TOTAL_LENGHT_MESSAGE);
+	// if( n ==-1) printf(" error de rebre el paquet AR \n");
+	// if(strcmp(SeqBytes,"AD0") == 0){ // s'ha desresgistrat correctament
+	// 	return 1;
+	// }
+    // else if(strcmp(SeqBytes, "AD1") == 0){
+    //     return -2;
+    // }
+    // else{
+    //     return -1;
+    // }
+}
+
+
+int LUMI_PeticioLocalitzacio(int Sck, const char *nickFrom, const char * dnsFrom, const char * nickTo, const char *dnsTo){//, int portUDPloc){
+
+	char SeqBytes[TOTAL_LENGHT_MESSAGE];
+    char MI_preguntador[MAX_LINIA];
+    char MI_preguntat[MAX_LINIA];
+
+    bzero(SeqBytes, TOTAL_LENGHT_MESSAGE);
+    bzero(MI_preguntador, MAX_LINIA);
+    bzero(MI_preguntat, MAX_LINIA);
+
+    MontaAdrecaMi(MI_preguntador, nickFrom, dnsFrom);
+    MontaAdrecaMi(MI_preguntat, nickTo, dnsTo);
+
+	strcpy(SeqBytes, (char*)LOCALITZACIO);
+	strcat(SeqBytes, MI_preguntador);
+	strcat(SeqBytes, (char*)SEPARADOR); // separador
+	strcat(SeqBytes, MI_preguntat);
+
+    //char dns[MAX_LINIA];
+    //char usuari[MAX_LINIA];
+    //bzero(dns, MAX_LINIA);
+    //bzero(usuari, MAX_LINIA);
+
+    // TODO : S'ha de muntar la string amb l'usuari.
+
+    //LUMI_UsuariIDnsDeMi(MI_preguntador, dns, usuari);
+    LUMI_EnviaAMI(Sck, dnsTo, SeqBytes);
+}
+
+int LUMI_ResponLocalitzacio(int socket, int codi, const char * usuariPreguntador, const char * dnsPreguntador, char * ip, int portTCP){
+    char missatge [TOTAL_LENGHT_MESSAGE];
+    char direccio [TOTAL_LENGHT_MESSAGE];
+    bzero(missatge, TOTAL_LENGHT_MESSAGE);
+    bzero(direccio, TOTAL_LENGHT_MESSAGE);
+
+    strcpy(missatge, "AL");
+    char codiString[1];
+    sprintf(codiString, "%d", codi);
+    strcat(missatge, codiString);
+
+    MontaAdrecaMi(direccio, dnsPreguntador, usuariPreguntador);
+
+    if(codi == ONLINE_LLIURE){
+        strcat(missatge, direccio);
+    }
+    else if(codi == ONLINE_OCUPAT){
+        strcat(missatge, direccio);
+        strcat(missatge, (char*)SEPARADOR);
+        strcat(missatge, ip);
+        strcat(missatge, (char*)SEPARADOR);
+        char portString[5];
+        sprintf(portString, "%d", portTCP);
+        strcat(missatge, portString);
     }
     else{
         return -1;
     }
+
+    return LUMI_EnviaAMI(socket, dnsPreguntador, missatge);
 }
 
-
-int LUMI_PeticioLocalitzacio(int Sck, const char *MI_preguntador,const char *MI_preguntat, int portUDPloc){
-
-	char SeqBytes[TOTAL_LENGHT_MESSAGE];
-
-	strcpy(SeqBytes, "L");
-	strcat(SeqBytes, MI_preguntador);
-	strcat(SeqBytes, "#"); // separador
-	strcat(SeqBytes, MI_preguntat);
-
-    char dns[MAX_LINIA];
-    char usuari[MAX_LINIA];
-    bzero(dns, MAX_LINIA);
-    bzero(usuari, MAX_LINIA);
-
-    LUMI_UsuariIDnsDeMi(MI_preguntador, dns, usuari);
-    LUMI_EnviaAMI(Sck, usuari, dns, SeqBytes);
-}
-
-
-int LUMI_ProcessaClient(int sck){
+int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns){
 
     char ipRem[MAX_IP_LENGTH] = "";
 	int  portRem = 0;
-	char missatge[MAX_MESSAGE_LENGHT];
-	bzero(missatge, MAX_MESSAGE_LENGHT);
-
+	// char missatge[MAX_MESSAGE_LENGHT];
+	// bzero(missatge, MAX_MESSAGE_LENGHT);
     int longitud = UDP_RepDe(sck, ipRem, &portRem, missatge, MAX_MESSAGE_LENGHT);
-
+    printf("##### HA ARRIBAT -> %s\n", missatge);
     int resultatAccio = 0;
+
     if(longitud < 0){
         return -1;
     }
     else{
-        if(missatge[0] == 'A'){
+        if(missatge[0] == ACCEPTAT_MISSATGE){
             if(missatge[1] == REGISTRE){ // Resposta de registre
+                printf("%c\n",missatge[2]);
+                printf("%c\n",CORRECTE);
                 if(missatge[2] == CORRECTE){
-
                     // TODO :  Registrat correctament, escriure log
                     // Escriure per pantalla també.
                     return REGISTRE_CORRECTE;
@@ -877,14 +984,10 @@ int LUMI_ProcessaClient(int sck){
             }
         }
         else if(missatge[0] == LOCALITZACIO) { // Missatge de localització, pregunten per mi.
-            // S'ha de retornar la direcció ip i el port TCP en un missatge amb el format :
-            // Si ja estic parlant amb un altre client :
-                // S'ha de retornar el missatge : AL3preguntador@dnsPreguntador
-            // Si estic lliure :
-                // S'ha de retornar el missatge : AL0preguntador@dnsPreguntador#IP#PORT_TCP
-
-            // NOTA :: Per retornar el missatge pots fer servir la funció LUMI_EnviaAMI
-            // Passant-li socket, preguntador, dnsPreguntador, missatge
+            char jo[MAX_MESSAGE_LENGHT];
+            bzero(jo, MAX_MESSAGE_LENGHT);
+            // S'emplenen els camps usuari i dns per que es pugui respondre.
+            sscanf(missatge, "L%[^'@']@%[^'#']#%s", usuari, dns, jo);
             return LOCALITZACIO_PETICIO;
         }
         else{

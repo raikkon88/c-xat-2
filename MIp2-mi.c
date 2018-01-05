@@ -194,8 +194,7 @@ int MI_getIpiPortDeSocket(int sck, char * ipLocal, int * port){
     int addrlen = sizeof(sin);
     int local_port = 0;
     if(getsockname(sck, (struct sockaddr *)&sin, &addrlen) == 0 &&
-       sin.sin_family == AF_INET &&
-       addrlen == sizeof(sin))
+       sin.sin_family == AF_INET && addrlen == sizeof(sin))
     {
         *port = (int)ntohs(sin.sin_port);
     }

@@ -22,12 +22,32 @@
 //#include "Registre.h"
 //#include "DataSet.h"
 
-#define MAX_MESSAGE_LENGHT   200
-#define TOTAL_LENGHT_MESSAGE 204
-#define MAX_IP_LENGTH        16
-#define MAX_LINIA		     200
-#define IP_AUTO              "0.0.0.0"
-#define PORT_AUTO            0
+#define MAX_MESSAGE_LENGHT          200
+#define TOTAL_LENGHT_MESSAGE        204
+#define MAX_IP_LENGTH               16
+#define MAX_LINIA		             200
+#define IP_AUTO                     "0.0.0.0"
+#define PORT_AUTO                   0
+#define DEFAULT_PORT_SERVER         8765
+#define MAX_NOMBRE_RETRANSMISSIONS  3
+
+// Tipus de peticions
+#define ACCEPTAT_MISSATGE           'A'
+#define REGISTRE                    'R'
+#define DESREGISTRE                 'D'
+#define LOCALITZACIO                'L'
+
+// Estat de les respostes
+#define CORRECTE                    '0'
+#define INCORRECTE                  '1'
+
+// Estat del client amb el que es vol parlar
+#define ONLINE_LLIURE               0
+#define OFFLINE                     1
+#define NO_EXISTEIX                 2
+#define ONLINE_OCUPAT               3
+
+// Tipus de retorn de les peticions.
 #define REGISTRE_CORRECTE           10
 #define REGISTRE_INCORRECTE         11
 #define DESREGISTRE_CORRECTE        12
@@ -38,7 +58,7 @@
 #define LOCALITZACIO_NO_EXISTEIX    17
 #define LOCALITZACIO_ONLINE_OCUPAT  18
 #define LOCALITZACIO_PETICIO        19
-#define DEFAULT_PORT_SERVER  8765
+
 
 
 /**
@@ -117,15 +137,21 @@ int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, 
 int LUMI_Localitza(int sck, char * rebut, int longitud, struct DataSet * d);
 int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struct DataSet * d);
 int LUMI_GeneraRespostaLocalitzacio(int codi, char* contingut, char * resposta);
-int LUMI_EnviaAMI(int sck, char * usuari, char * dns, char * missatge);
+int LUMI_EnviaAMI(int sck, const char * dns, const char * missatge);
 int LUMI_ContestaClientMateixDomini(int sck, char * nickFrom, int codiResposta, struct DataSet * d);
-int LUMI_ContestaServidor(int sck, char * nickFrom, char * dnsFrom, int codi);
+int LUMI_ContestaServidor(int sck, const char * nickFrom, const char * dnsFrom, int codi);
 int LUMI_getIpiPortDeSocket(int sck, char * ip, int * port);
-void LUMI_crea_resposta_registre(char * resposta, char * tipusResposta, int valorResposta);
+void LUMI_crea_resposta_registre(char * resposta, char tipusResposta, int valorResposta);
 
-
+int LUMI_HaArribatAlgunaCosa(const int * socketsEscoltant, int nSockets);
 int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc);
-int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc);
-int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc);
-int LUMI_PeticioLocalitzacio(int Sck, const char *MI_preguntador,const char *MI_preguntat, int portUDPloc);
-int LUMI_ProcessaClient(int sck);
+int LUMI_EnviaPeticio(const int * LlistaSck, int socketDeLlista, char * nickFrom, char * dnsFrom, char * nickTo, char * dnsTo, char tipusPeticio, int timeout);
+int LUMI_PeticioRegistre(int Sck, const char *usuari, char * domini);
+int LUMI_ResponLocalitzacio(int socket, int codi, const char * usuariPreguntador, const char * dnsPreguntador, char * ip, int portTCP);
+//int LUMI_PeticioRegistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc);
+int LUMI_PeticioDesregistre(int Sck, const char *usuari, char * domini);
+//int LUMI_PeticioDesregistre(int Sck, const char *usuari, const char *IPloc, int portUDPloc);
+int LUMI_PeticioLocalitzacio(int Sck, const char *nickFrom, const char * dnsFrom, const char * nickTo, const char *dnsTo);
+//int LUMI_PeticioLocalitzacio(int Sck, const char *MI_preguntador,const char *MI_preguntat, int portUDPloc);
+
+int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns);
