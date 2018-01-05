@@ -192,7 +192,7 @@ int main(int argc,char *argv[])
                     socketActiu = MI_DemanaConv(ipRemota, portTCPRem, ipTcpLocal, &portTCPLocal, usuariPreguntador, nickname);
                     EvalResult(socketActiu, socketsEscoltant, N_SOCKETS);
                     socketsEscoltant[SCK_TCP] = (int)socketActiu;
-                    conversa(socketActiu, &socketsEscoltant);
+                    conversa(socketActiu, socketsEscoltant);
 
                 }
                 else if(resultat == LOCALITZACIO_NO_EXISTEIX){
@@ -256,6 +256,7 @@ int main(int argc,char *argv[])
 int conversa(int socketActiu, int * socketsEscoltant){
     int resultatAccio = 1;
     while(resultatAccio > 0){
+        char missatge[MAX_BUFFER];
         bzero(missatge, MAX_BUFFER);
         socketActiu = MI_HaArribatLinia(socketsEscoltant[SCK_TCP]);
         if(socketActiu == TECLAT){
