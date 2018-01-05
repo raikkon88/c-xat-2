@@ -126,27 +126,26 @@ int main(int argc,char *argv[])
     EvalResult(LUMI_getIpiPortDeSocket(socketsEscoltant[SCK_UDP], ipUdpLocal, &portUDPLocal), socketsEscoltant, N_SOCKETS);
     printf("/* SOCKET %i Ip i Port UDP configurat de manera local : %s -> %i\n", socketsEscoltant[SCK_UDP], ipUdpLocal, portUDPLocal);
 
+    // Es configura el socket TCP i s'emplenen els camps de ip i port locals.
+    socketsEscoltant[SCK_TCP] = MI_IniciaEscPetiRemConv(PORT_DEFECTE);
+    socketEscoltador = socketsEscoltant[SCK_TCP];
+    EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS); // Evaluem el resultat de l'anterior instrucció
+    EvalResult(MI_getIpiPortDeSocket(socketsEscoltant[SCK_TCP], ipTcpLocal, &portTCPLocal), socketsEscoltant, N_SOCKETS);
+    printf("/* SOCKET %i Ip i Port TCP configurat de manera local : %s -> %i\n", socketsEscoltant[SCK_TCP], ipTcpLocal, portTCPLocal);
+
+    int resultat = LUMI_EnviaPeticio((int *)&socketsEscoltant, SCK_UDP, nickname, domini, "", "", "", 0, REGISTRE, TIMEOUT);
+    if(resultat == REGISTRE_CORRECTE){
+        // S'ha registrat correctament, escriure per pantalla.
+        printf("/* Registrat contra el domini : %s\n", domini);
+    }
+    else{
+        // Error en el registre, s'ha d'escriure el log, acabar la app. o tornar a demanar el nickname.
+        fiPrograma(socketsEscoltant, N_SOCKETS, "Error al registrar contra el domini");
+        fi = FI_PROGRAMA;
+    }
+
+    // EN aquest punt estic registrat!
     while(fi != FI_PROGRAMA){
-
-        // Es configura el socket TCP i s'emplenen els camps de ip i port locals.
-        socketsEscoltant[SCK_TCP] = MI_IniciaEscPetiRemConv(PORT_DEFECTE);
-        socketEscoltador = socketsEscoltant[SCK_TCP];
-        EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS); // Evaluem el resultat de l'anterior instrucció
-        EvalResult(MI_getIpiPortDeSocket(socketsEscoltant[SCK_TCP], ipTcpLocal, &portTCPLocal), socketsEscoltant, N_SOCKETS);
-        printf("/* SOCKET %i Ip i Port TCP configurat de manera local : %s -> %i\n", socketsEscoltant[SCK_TCP], ipTcpLocal, portTCPLocal);
-
-        int resultat = LUMI_EnviaPeticio((int *)&socketsEscoltant, SCK_UDP, nickname, domini, "", "", "", 0, REGISTRE, TIMEOUT);
-        if(resultat == REGISTRE_CORRECTE){
-            // S'ha registrat correctament, escriure per pantalla.
-            printf("/* Registrat contra el domini : %s\n", domini);
-        }
-        else{
-            // Error en el registre, s'ha d'escriure el log, acabar la app. o tornar a demanar el nickname.
-            fiPrograma(socketsEscoltant, N_SOCKETS, "Error al registrar contra el domini");
-            fi = FI_PROGRAMA;
-        }
-
-        // EN aquest punt estic registrat!
 
         // Purguem variables que s'han de tornar a fer servir.
         bzero(instruccio, MAX_BUFFER);
@@ -188,7 +187,7 @@ int main(int argc,char *argv[])
                     printf("/* El client %s del domini %s està online peró conversant amb un altre. \n", nickname, domini);
                 }
                 else if(resultat == LOCALITZACIO_ONLINE_LLIURE){
-                    printf("/* Connectant amb %s@%s a la ip %s, port %i. \n", nickname, domini, ipRemota, portTCPRem);
+                    printf("/* Connectant amb %s@%s a la ip %s, port %i. \n", usuariPreguntador, dnsPreguntador, ipRemota, portTCPRem);
                     estat = CONNECTAT;
                     socketEscoltador = socketsEscoltant[SCK_TCP];
                     socketsEscoltant[SCK_TCP] = MI_DemanaConv(ipRemota, portTCPRem, ipTcpLocal, &portTCPLocal, usuariPreguntador, nickname);
@@ -218,11 +217,12 @@ int main(int argc,char *argv[])
         // Si el socket actiu no és un teclat i no és una petició TCP fem un accept.
         else {
             printf("Esta fent una petició TCP\n");
+            socketEscoltador = socketsEscoltant[SCK_TCP];
             socketsEscoltant[SCK_TCP] = MI_AcceptaConv(socketActiu, ipRemota, &port, ALL_IP, &portTCPLocal, adrecaMI, nicknameRemot);
             estat = CONNECTAT;
             EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS);
             conversa(socketsEscoltant[SCK_TCP], socketsEscoltant, nicknameRemot);
-
+            socketsEscoltant[SCK_TCP] = socketEscoltador;
         }
         // -------------------------
         estat = DESCONNECTAT;
@@ -239,13 +239,13 @@ int main(int argc,char *argv[])
         // creaPrompt(promptRemot, nicknameRemot);
 
         //socketsEscoltant[SCK_TCP] = socketEscoltador;
-        while(fi == '1' || fi != '0'){
-
-            nInstruccio = readFromKeyboard(instruccio, MAX_BUFFER);
-            if(nInstruccio == 1){
-                fi = instruccio[0];
-            }
-        }
+        // while(fi == '1' || fi != '0'){
+        //
+        //     nInstruccio = readFromKeyboard(instruccio, MAX_BUFFER);
+        //     if(nInstruccio == 1){
+        //         fi = instruccio[0];
+        //     }
+        // }
     }
 
     return (0);
