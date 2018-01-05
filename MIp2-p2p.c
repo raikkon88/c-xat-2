@@ -196,11 +196,11 @@ int main(int argc,char *argv[])
                     conversa(socketsEscoltant[SCK_TCP], socketsEscoltant, nickname);
 
 
-                                // Es Reconfigura el socket TCP i s'emplenen els camps de ip i port locals.
-                                socketsEscoltant[SCK_TCP] = MI_IniciaEscPetiRemConv(PORT_DEFECTE);
-                                EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS); // Evaluem el resultat de l'anterior instrucció
-                                EvalResult(MI_getIpiPortDeSocket(socketsEscoltant[SCK_TCP], ipTcpLocal, &portTCPLocal), socketsEscoltant, N_SOCKETS);
-                                printf("/* SOCKET %i Ip i Port TCP configurat de manera local : %s -> %i\n", socketsEscoltant[SCK_TCP], ipTcpLocal, portTCPLocal);
+                                // // Es Reconfigura el socket TCP i s'emplenen els camps de ip i port locals.
+                                // socketsEscoltant[SCK_TCP] = MI_IniciaEscPetiRemConv(PORT_DEFECTE);
+                                // EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS); // Evaluem el resultat de l'anterior instrucció
+                                // EvalResult(MI_getIpiPortDeSocket(socketsEscoltant[SCK_TCP], ipTcpLocal, &portTCPLocal), socketsEscoltant, N_SOCKETS);
+                                // printf("/* SOCKET %i Ip i Port TCP configurat de manera local : %s -> %i\n", socketsEscoltant[SCK_TCP], ipTcpLocal, portTCPLocal);
                 }
                 else if(resultat == LOCALITZACIO_NO_EXISTEIX){
                     printf("/* El client %s del domini %s no existeix!. \n", nickname, domini);
