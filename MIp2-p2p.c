@@ -162,7 +162,7 @@ int main(int argc,char *argv[])
         EvalResult(socketActiu, socketsEscoltant, N_SOCKETS);
         if(socketActiu == TECLAT){
             nInstruccio = readFromKeyboard(instruccio, MAX_BUFFER);
-            printf("%d\n", nInstruccio);
+            //printf("%d\n", nInstruccio);
             if(nInstruccio == 1 && instruccio[0] == FI_PROGRAMA){
                 int resultat = LUMI_EnviaPeticio((int *)&socketsEscoltant, SCK_UDP, nickname, domini, "", "", DESREGISTRE, TIMEOUT);
                 if(resultat == DESREGISTRE_CORRECTE){
@@ -178,6 +178,10 @@ int main(int argc,char *argv[])
             else {
                 // Extraiem les dades amb qui es vol connectar
                 sscanf(instruccio, "%[^'@']@%s", usuariPreguntador, dnsPreguntador);
+
+                printf("%s\n", usuariPreguntador);
+                printf("%s\n", dnsPreguntador);
+
                 int resultat = LUMI_EnviaPeticio((int *)&socketsEscoltant, SCK_UDP, nickname, domini, usuariPreguntador, dnsPreguntador, LOCALITZACIO, TIMEOUT);
                 if(resultat == LOCALITZACIO_ONLINE_OCUPAT){
                     printf("/* El client %s del domini %s està online peró conversant amb un altre. \n", nickname, domini);
