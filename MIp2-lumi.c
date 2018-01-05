@@ -838,7 +838,7 @@ int UDP_RepDe(int Sck, char *IPrem, int *portUDPrem, char *SeqBytes, int LongSeq
 		return -1;
 	}
 
-    printf("S'ha rebut -> %s\n", SeqBytes);
+    printf("S'ha rebut de %s,%i -> %s\n", IPrem, (int)portUDPrem, SeqBytes);
 
 
     bzero(IPrem, MAX_IP_LENGTH);
