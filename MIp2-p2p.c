@@ -49,6 +49,7 @@
 void EvalResult(int res, const int *sockets, int nSockets);
 int getPort();
 int fiPrograma(int * LlistaSck, int nSockets, char * missatge);
+int conversa(int socketActiu, int * socketsEscoltant);
 
 
 int main(int argc,char *argv[])
@@ -188,9 +189,10 @@ int main(int argc,char *argv[])
                 else if(resultat == LOCALITZACIO_ONLINE_LLIURE){
                     printf("/* Realitzant la connexió amb el client %s del domini %s a la ip %s, port %i. \n", nickname, domini, ipRemota, portTCPRem);
                     estat = CONNECTAT;
-                    socketActiu = MI_DemanaConv(ipRemota, port, ALL_IP, &portTCPLocal, adrecaMI, nicknameRemot);
+                    socketActiu = MI_DemanaConv(ipRemota, portTCPRem, ipTcpLocal, &portTCPLocal, usuariPreguntador, nickname);
                     EvalResult(socketActiu, socketsEscoltant, N_SOCKETS);
                     socketsEscoltant[SCK_TCP] = (int)socketActiu;
+                    conversa(socketActiu, &socketsEscoltant);
 
                 }
                 else if(resultat == LOCALITZACIO_NO_EXISTEIX){
@@ -215,40 +217,11 @@ int main(int argc,char *argv[])
         // Si el socket actiu no és un teclat i no és una petició TCP fem un accept.
         else {
             printf("Esta fent una petició TCP\n");
-
             socketActiu = MI_AcceptaConv(socketActiu, ipRemota, &port, ALL_IP, &portTCPLocal, adrecaMI, nicknameRemot);
             estat = CONNECTAT;
             EvalResult(socketActiu, socketsEscoltant, N_SOCKETS);
             socketsEscoltant[SCK_TCP] = socketActiu;
-
-            int resultatAccio = 1;
-            while(resultatAccio > 0){
-                bzero(missatge, MAX_BUFFER);
-                socketActiu = MI_HaArribatLinia(socketsEscoltant[SCK_TCP]);
-                if(socketActiu == TECLAT){
-                    EvalResult(readFromKeyboard(missatge, MAX_BUFFER), socketsEscoltant, N_SOCKETS);
-                    if(strcmp(missatge,"$")!=1) break;
-                    resultatAccio = MI_EnviaLinia(socketsEscoltant[SCK_TCP], missatge);
-                    EvalResult(resultatAccio, socketsEscoltant, N_SOCKETS);
-                }
-                // Estem conversant, per tant hem de contestar amb un codi en concret.
-                else if(socketActiu == SCK_UDP){
-                    int peticio = LUMI_ProcessaClient(socketsEscoltant[SCK_UDP], missatge, usuariPreguntador, dnsPreguntador, "", 0);
-                    if(peticio == LOCALITZACIO_PETICIO){
-                        // S'ha de retornar el missatge : AL3preguntador@dnsPreguntador
-                        resultat = LUMI_ResponLocalitzacio(socketsEscoltant[SCK_UDP], ONLINE_OCUPAT, usuariPreguntador, dnsPreguntador, "", 0);
-                    }
-                }
-                else{
-                    resultatAccio = MI_RepLinia(socketActiu, missatge);
-                    if(resultatAccio != 0){
-                        printf("%s\n", missatge);
-                    }
-               }
-
-            }
-            //En cas que el resultat sigui -2 o -1 es tenquen tots els sockets.
-            EvalResult(resultatAccio, socketsEscoltant, N_SOCKETS);
+            conversa(socketActiu, socketsEscoltant);
         }
         // -------------------------
         estat = DESCONNECTAT;
@@ -279,6 +252,41 @@ int main(int argc,char *argv[])
     return (0);
 
  }
+
+int conversa(int socketActiu, int * socketsEscoltant){
+    int resultatAccio = 1;
+    while(resultatAccio > 0){
+        bzero(missatge, MAX_BUFFER);
+        socketActiu = MI_HaArribatLinia(socketsEscoltant[SCK_TCP]);
+        if(socketActiu == TECLAT){
+            EvalResult(readFromKeyboard(missatge, MAX_BUFFER), socketsEscoltant, N_SOCKETS);
+            if(strcmp(missatge,"$")!=1) break;
+            resultatAccio = MI_EnviaLinia(socketsEscoltant[SCK_TCP], missatge);
+            EvalResult(resultatAccio, socketsEscoltant, N_SOCKETS);
+        }
+        else{
+            resultatAccio = MI_RepLinia(socketActiu, missatge);
+            if(resultatAccio != 0){
+                printf("%s\n", missatge);
+            }
+       }
+
+
+
+        // Estem conversant, per tant hem de contestar amb un codi en concret.
+        // else if(socketActiu == SCK_UDP){
+        //     int peticio = LUMI_ProcessaClient(socketsEscoltant[SCK_UDP], missatge, usuariPreguntador, dnsPreguntador, "", 0);
+        //     if(peticio == LOCALITZACIO_PETICIO){
+        //         // S'ha de retornar el missatge : AL3preguntador@dnsPreguntador
+        //         resultat = LUMI_ResponLocalitzacio(socketsEscoltant[SCK_UDP], ONLINE_OCUPAT, usuariPreguntador, dnsPreguntador, "", 0);
+        //     }
+        // }
+
+
+    }
+    //En cas que el resultat sigui -2 o -1 es tenquen tots els sockets.
+    EvalResult(resultatAccio, socketsEscoltant, N_SOCKETS);
+}
 
 /***************** FUNCIONS DEL PROGRAMA ***********************************/
 int fiPrograma(int * LlistaSck, int nSockets, char * missatge){

@@ -923,8 +923,11 @@ int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns, cha
                     // S'ha de generar un socket TCP amb el programa MI i s'ha de connectar amb el client
                     char port[6];
                     bzero(port, 6);
-                    sscanf(missatge, "#%[^'#']#%s", ipTCPRem, port);
+                    char resta[MAX_MESSAGE_LENGHT];
+
+                    sscanf(missatge, "%[^'#']#%[^'#']#%s",resta, ipTCPRem, port);
                     *portTCPrem = atoi(port);
+
                     return LOCALITZACIO_ONLINE_LLIURE;
                 }
                 else if(missatge[2] == OFFLINE){
