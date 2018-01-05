@@ -195,7 +195,6 @@ int main(int argc,char *argv[])
                     printf("%s\n", "s'inicia la conversa... crec que no hi arriva...");
                     conversa(socketsEscoltant[SCK_TCP], socketsEscoltant, nickname);
 
-
                     // Es Reconfigura el socket TCP i s'emplenen els camps de ip i port locals.
                     socketsEscoltant[SCK_TCP] = MI_IniciaEscPetiRemConv(PORT_DEFECTE);
                     EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS); // Evaluem el resultat de l'anterior instrucció
@@ -260,20 +259,28 @@ int conversa(int socketActiu, int * socketsEscoltant, const char * nickRemot){
             resultatAccio = MI_EnviaLinia(socketsEscoltant[SCK_TCP], missatge);
             EvalResult(resultatAccio, socketsEscoltant, N_SOCKETS);
         }
+        // Estem conversant, per tant hem de contestar amb un codi en concret.
+        else if(socketActiu == SCK_UDP){
+            char usuariPreguntador[MAX_BUFFER];
+            char dnsPreguntador[MAX_BUFFER];
+            int peticio = LUMI_ProcessaClient(socketsEscoltant[SCK_UDP], missatge, usuariPreguntador, dnsPreguntador, "", 0);
+            if(peticio == LOCALITZACIO_PETICIO){
+                // S'ha de retornar el missatge : AL3preguntador@dnsPreguntador
+                int resultat = LUMI_ResponLocalitzacio(socketsEscoltant[SCK_UDP], ONLINE_OCUPAT, usuariPreguntador, dnsPreguntador, "", 0);
+                EvalResult(resultat, socketsEscoltant, N_SOCKETS);
+                if(resultat < 0){
+                    resultatAccio = 0;
+                }
+
+            }
+        }
         else{
             resultatAccio = MI_RepLinia(socketActiu, missatge);
             if(resultatAccio != 0){
                 printf("%s\n", missatge);
             }
        }
-        // Estem conversant, per tant hem de contestar amb un codi en concret.
-        // else if(socketActiu == SCK_UDP){
-        //     int peticio = LUMI_ProcessaClient(socketsEscoltant[SCK_UDP], missatge, usuariPreguntador, dnsPreguntador, "", 0);
-        //     if(peticio == LOCALITZACIO_PETICIO){
-        //         // S'ha de retornar el missatge : AL3preguntador@dnsPreguntador
-        //         resultat = LUMI_ResponLocalitzacio(socketsEscoltant[SCK_UDP], ONLINE_OCUPAT, usuariPreguntador, dnsPreguntador, "", 0);
-        //     }
-        // }
+
     }
     //En cas que el resultat sigui -2 o -1 es tenquen tots els sockets.
     EvalResult(resultatAccio, socketsEscoltant, N_SOCKETS);
