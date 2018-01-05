@@ -35,10 +35,6 @@
 #define DESCONNECTAT        0
 #define CONNECTAT           1
 
-#define DEIXAR_SOCKET_OBERT 0
-#define TANCAR_SOCKET       1
-
-
 #define FI_PROGRAMA         '0'
 
 /* Definició de màxims de longitud dels diferents tipus d'string            */
@@ -53,7 +49,7 @@
 void EvalResult(int res, const int *sockets, int nSockets);
 int getPort();
 int fiPrograma(int * LlistaSck, int nSockets, char * missatge);
-int conversa(int socketActiu, int * socketsEscoltant, const char * nickRemot, int tancarSocket);
+int conversa(int socketActiu, int * socketsEscoltant, const char * nickRemot);
 
 
 int main(int argc,char *argv[])
@@ -197,7 +193,14 @@ int main(int argc,char *argv[])
                     socketsEscoltant[SCK_TCP] = MI_DemanaConv(ipRemota, portTCPRem, ipTcpLocal, &portTCPLocal, usuariPreguntador, nickname);
                     EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS);
                     printf("%s\n", "s'inicia la conversa... crec que no hi arriva...");
-                    conversa(socketsEscoltant[SCK_TCP], socketsEscoltant, nickname, TANCAR_SOCKET);
+                    conversa(socketsEscoltant[SCK_TCP], socketsEscoltant, nickname);
+
+
+                                // Es Reconfigura el socket TCP i s'emplenen els camps de ip i port locals.
+                                socketsEscoltant[SCK_TCP] = MI_IniciaEscPetiRemConv(PORT_DEFECTE);
+                                EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS); // Evaluem el resultat de l'anterior instrucció
+                                EvalResult(MI_getIpiPortDeSocket(socketsEscoltant[SCK_TCP], ipTcpLocal, &portTCPLocal), socketsEscoltant, N_SOCKETS);
+                                printf("/* SOCKET %i Ip i Port TCP configurat de manera local : %s -> %i\n", socketsEscoltant[SCK_TCP], ipTcpLocal, portTCPLocal);
                 }
                 else if(resultat == LOCALITZACIO_NO_EXISTEIX){
                     printf("/* El client %s del domini %s no existeix!. \n", nickname, domini);
@@ -220,13 +223,12 @@ int main(int argc,char *argv[])
         }
         // Si el socket actiu no és un teclat i no és una petició TCP fem un accept.
         else {
-            printf("Esta fent una petició TCP\n");
+            //printf("Esta fent una petició TCP\n");
             socketEscoltador = socketsEscoltant[SCK_TCP];
             socketsEscoltant[SCK_TCP] = MI_AcceptaConv(socketActiu, ipRemota, &port, ALL_IP, &portTCPLocal, adrecaMI, nicknameRemot);
             estat = CONNECTAT;
             EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS);
-            conversa(socketsEscoltant[SCK_TCP], socketsEscoltant, nicknameRemot, DEIXAR_SOCKET_OBERT);
-            socketsEscoltant[SCK_TCP] = socketEscoltador;
+            conversa(socketsEscoltant[SCK_TCP], socketsEscoltant, nicknameRemot);
         }
         // -------------------------
         estat = DESCONNECTAT;
@@ -236,7 +238,7 @@ int main(int argc,char *argv[])
 
  }
 
-int conversa(int socketActiu, int * socketsEscoltant, const char * nickRemot, int tancarSocket){
+int conversa(int socketActiu, int * socketsEscoltant, const char * nickRemot){
     printf("/*-------------------------------------------------------------------*/\n");
     printf("/* S'HA ESTABLERT UNA CONVERSA TCP AMB %s\n", nickRemot);
     printf("/* Parla o espera que et parlin...\n");
@@ -273,9 +275,7 @@ int conversa(int socketActiu, int * socketsEscoltant, const char * nickRemot, in
     printf("/*-------------------------------------------------------------------*/\n");
     printf("/* CONVERSA ACABADA Seguim amb l'execució del programa... \n");
     printf("/*-------------------------------------------------------------------*/\n");
-    if(tancarSocket == TANCAR_SOCKET){
-        MI_AcabaConv(socketsEscoltant[SCK_TCP]);
-    }
+    MI_AcabaConv(socketsEscoltant[SCK_TCP]);
     return 0;
 }
 
