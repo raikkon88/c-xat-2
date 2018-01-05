@@ -81,8 +81,6 @@ int main(int argc,char *argv[])
     bzero(dnsPreguntador,       MAX_BUFFER);
     bzero(usuariPreguntador,    MAX_BUFFER);
 
-
-
     int port; // Valor per defecte.
     int portTCPRem=0;
     int portTCPLocal=0;
@@ -107,9 +105,17 @@ int main(int argc,char *argv[])
 
     char nickname[MAX_BUFFER];
     char domini[MAX_BUFFER];
+    char nicknameOriginal[MAX_BUFFER];
+    char dominiOriginal[MAX_BUFFER];
+
     bzero(nickname, MAX_BUFFER);
     bzero(domini, MAX_BUFFER);
+    bzero(nicknameOriginal, MAX_BUFFER);
+    bzero(dominiOriginal, MAX_BUFFER);
+
     MI_UsuariIDnsDeMi(adrecaMI, domini, nickname);
+    strcpy(nicknameOriginal, nickname);
+    strcpy(dominiOriginal, domini);
 
     printf("/*-------------------------------------------------------------------*/\n");
     printf("/* Informació del programa : \n");
@@ -200,6 +206,9 @@ int main(int argc,char *argv[])
                     EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS); // Evaluem el resultat de l'anterior instrucció
                     EvalResult(MI_getIpiPortDeSocket(socketsEscoltant[SCK_TCP], ipTcpLocal, &portTCPLocal), socketsEscoltant, N_SOCKETS);
                     printf("/* SOCKET %i Ip i Port TCP configurat de manera local : %s -> %i\n", socketsEscoltant[SCK_TCP], ipTcpLocal, portTCPLocal);
+
+                    strcpy(nickname, nicknameOriginal);
+                    strcpy(domini, dominiOriginal);
                 }
                 else if(resultat == LOCALITZACIO_NO_EXISTEIX){
                     printf("/* El client %s del domini %s no existeix!. \n", nickname, domini);
@@ -233,6 +242,9 @@ int main(int argc,char *argv[])
             EvalResult(socketsEscoltant[SCK_TCP], socketsEscoltant, N_SOCKETS); // Evaluem el resultat de l'anterior instrucció
             EvalResult(MI_getIpiPortDeSocket(socketsEscoltant[SCK_TCP], ipTcpLocal, &portTCPLocal), socketsEscoltant, N_SOCKETS);
             printf("/* SOCKET %i Ip i Port TCP configurat de manera local : %s -> %i\n", socketsEscoltant[SCK_TCP], ipTcpLocal, portTCPLocal);
+
+            strcpy(nickname, nicknameOriginal);
+            strcpy(domini, dominiOriginal);
         }
         // -------------------------
         estat = DESCONNECTAT;
@@ -328,7 +340,7 @@ void EvalResult(int res, const int *sockets, int nSockets){
  * Retorna un -1 si quelcom ha anat malament.
  * Retorna el nombre de bytes llegits si tot ha anat bé, inData conté la cadena de caràcters llegida.
  */
-int readFromKeyboard(char * inData, int numberBytesToRead){    
+int readFromKeyboard(char * inData, int numberBytesToRead){
 	int bytes_llegits;
 	if((bytes_llegits=read(0, inData, numberBytesToRead))==-1)
 	{
