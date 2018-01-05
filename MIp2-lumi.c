@@ -203,15 +203,26 @@ int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struc
 
     char nickTo[MAX_LINIA];
     char dnsTo[MAX_LINIA];
+    char resta[MAX_LINIA];
+
+    bzero(nickTo, MAX_LINIA);
+    bzero(dnsTo, MAX_LINIA);
+    bzero(resta, MAX_LINIA);
 
     // Extraiem els camps de les direccions
-    sscanf(direccio, "%[^'@']@%s",nickTo, dnsTo);
+    if(rebut[2] == ONLINE_LLIURE){
+        sscanf(direccio, "%[^'@']@%[^'#']#%s",nickTo, dnsTo, resta);
+    }
+    else{
+        printf("%s\n", "Esta entrant per aqui");
+        sscanf(direccio, "%[^'@']@%s",nickTo, dnsTo);
+    }
 
     printf("nick to : %s\n", nickTo);
     printf("dns to : %s\n", dnsTo);
 
     int resultatAccio = 0;
-    if(strcpy(dnsTo, d->domini) == 0){ // El missatge va dirigit a mi
+    if(strcmp(dnsTo, d->domini) == 0){ // El missatge va dirigit a mi
         struct Registre desti = create(nickTo);
         existeixRegistre(d, &desti);
         if(desti.online != -1) { // El registre existeix
@@ -817,13 +828,16 @@ int LUMI_PeticioLocalitzacio(int Sck, const char *nickFrom, const char * dnsFrom
 }
 
 int LUMI_ResponLocalitzacio(int socket, int codi, const char * usuariPreguntador, const char * dnsPreguntador, char * ip, int portTCP){
+
     char missatge [TOTAL_LENGHT_MESSAGE];
     char direccio [TOTAL_LENGHT_MESSAGE];
+
     bzero(missatge, TOTAL_LENGHT_MESSAGE);
     bzero(direccio, TOTAL_LENGHT_MESSAGE);
 
-    strcpy(missatge, "AL");
-
+    //strcpy(missatge, "AL");
+    missatge[0] = ACCEPTAT_MISSATGE;
+    missatge[1] = LOCALITZACIO;
     char codiString[2];
     sprintf(codiString, "%d", codi);
     strcat(missatge, codiString);
@@ -864,8 +878,6 @@ int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns){
     else{
         if(missatge[0] == ACCEPTAT_MISSATGE){
             if(missatge[1] == REGISTRE){ // Resposta de registre
-                printf("%c\n",missatge[2]);
-                printf("%c\n",CORRECTE);
                 if(missatge[2] == CORRECTE){
                     // TODO :  Registrat correctament, escriure log
                     // Escriure per pantalla també.
@@ -929,8 +941,6 @@ int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns){
             }
         }
         else if(missatge[0] == LOCALITZACIO) { // Missatge de localització, pregunten per mi.
-
-            printf("Pregunten per mi\n");
 
             char jo[MAX_MESSAGE_LENGHT];
             bzero(jo, MAX_MESSAGE_LENGHT);

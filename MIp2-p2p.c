@@ -211,6 +211,8 @@ int main(int argc,char *argv[])
         }
         // Si el socket actiu no és un teclat i no és una petició TCP fem un accept.
         else {
+            printf("Esta fent una petició TCP\n");
+
             socketActiu = MI_AcceptaConv(socketActiu, ipRemota, &port, ALL_IP, &portTCPLocal, adrecaMI, nicknameRemot);
             estat = CONNECTAT;
             EvalResult(socketActiu, socketsEscoltant, N_SOCKETS);
@@ -240,14 +242,15 @@ int main(int argc,char *argv[])
                         printf("%s\n", missatge);
                     }
                }
+
             }
-            // En cas que el resultat sigui -2 o -1 es tenquen tots els sockets.
+            //En cas que el resultat sigui -2 o -1 es tenquen tots els sockets.
             EvalResult(resultatAccio, socketsEscoltant, N_SOCKETS);
         }
         // -------------------------
         estat = DESCONNECTAT;
         //mostraDadesRemotes(nicknameRemot, port, ipRemota);
-        MI_AcabaConv(socketsEscoltant[SCK_TCP]);
+        //MI_AcabaConv(socketsEscoltant[SCK_TCP]);
         // Intent de treure els prompts local i remot
         // S'ha intentat accedir al buffer de la pantalla per extreure el prompt si arriva algu i sinó es pinta l'altre.
         //---------------------------------------------------------------------------------------------------------------

@@ -42,10 +42,10 @@
 #define INCORRECTE                  '1'
 
 // Estat del client amb el que es vol parlar
-#define ONLINE_LLIURE               0
-#define OFFLINE                     1
-#define NO_EXISTEIX                 2
-#define ONLINE_OCUPAT               3
+#define ONLINE_LLIURE               '0'
+#define OFFLINE                     '1'
+#define NO_EXISTEIX                 '2'
+#define ONLINE_OCUPAT               '3'
 
 // Tipus de retorn de les peticions.
 #define REGISTRE_CORRECTE           10
