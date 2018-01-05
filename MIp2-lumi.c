@@ -383,7 +383,7 @@ int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
 
 int LUMI_ContestaServidor(int sck, const char * nickFrom, const char * dnsFrom, int codi){
     char direccio[MAX_LINIA];
-    MontaAdrecaMi(direccio, nickFrom, dnsFrom);
+    MontaAdrecaMi(direccio, dnsFrom, nickFrom);
     char resposta[MAX_LINIA];
     LUMI_GeneraRespostaLocalitzacio(codi, direccio, resposta);
     printf("Ha generat la resposta de localitzacio -> %s\n", resposta);
@@ -841,9 +841,9 @@ int UDP_RepDe(int Sck, char *IPrem, int *portUDPrem, char *SeqBytes, int LongSeq
 	strcpy(IPrem,inet_ntoa(adrrem.sin_addr));
 	*portUDPrem=ntohs(adrrem.sin_port);
 
-    printf("S'ha rebut de %s,%i -> %s que porten %i caracters i shan llegit %i\n", IPrem, (int)portUDPrem, SeqBytes, strlen(SeqBytes), bllegit);
+    printf("S'ha rebut de %s,%i -> %s que porten %i caracters i shan llegit %i\n", IPrem, (int)(int*)portUDPrem, SeqBytes, strlen(SeqBytes), bllegit);
 
-	return bllegit -1; // Se li resta el '\0'
+	return bllegit; // Se li resta el '\0'
 }
 
 /* S’allibera (s’esborra) el socket UDP d’identificador “Sck”.            */
