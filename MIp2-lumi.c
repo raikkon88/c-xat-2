@@ -623,24 +623,27 @@ int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temp
 
 	int selection;
 	if(Temps == -1){
-		selection = select(descmax+1, &conjunt, NULL, NULL, NULL);
+		if(select(descmax+1, &conjunt, NULL, NULL, NULL)==-1)
+        {
+            perror("Error en select");
+		    return (-1);
+        }
 	}
     else{
         struct timeval timeout;
     	timeout.tv_sec = Temps;
       	timeout.tv_usec = 0;
-		selection = select(descmax+1, &conjunt, NULL, NULL, &timeout);
+        if(select(descmax+1, &conjunt, NULL, NULL, NULL)==-1)
+        {
+            perror("Error en select");
+		    return (-1);
+        }
+	}
+	for(i = 0;i < LongLlistaSck; i++){
+		if (FD_ISSET(LlistaSck[i], &conjunt)) return LlistaSck[i];
 	}
 
-	if (selection > 0){
-		for(i = 0;i < LongLlistaSck; i++){
-			if (FD_ISSET(LlistaSck[i], &conjunt)) return LlistaSck[i];
-		}
-	}
-    if(selection == 0){ // ha passat timeout
-		return -2;
-	}
-	return -1;
+    return -2;
 }
 
 /* Donat el nom DNS "NomDNS" obté la corresponent @IP i l'escriu a "IP*"  */
