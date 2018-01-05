@@ -151,7 +151,7 @@ int LUMI_processa(int sck, struct DataSet * d){
             // int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes, int LongSeqBytes
             char resposta[MIDA_RESPOSTA_REGISTRE] = "";
             LUMI_crea_resposta_registre(resposta, REGISTRE, resultatRegistre);
-            printf("Resposta : %s\n", resposta);
+            //printf("Resposta : %s\n", resposta);
 			resultatAccio = UDP_EnviaA(sck, ipRem, portRem, resposta, MIDA_RESPOSTA_REGISTRE);
             // TODO: Escriure log
             // if(resultatResposta < 0){
@@ -164,7 +164,7 @@ int LUMI_processa(int sck, struct DataSet * d){
 			int resultatRegistre = LUMI_registre(missatge, longitud, d, ipRem, portRem, 0);
             char resposta[MIDA_RESPOSTA_REGISTRE]="";
             LUMI_crea_resposta_registre(resposta, DESREGISTRE, resultatRegistre);
-            printf("Resposta : %s\n", resposta);
+            //printf("Resposta : %s\n", resposta);
 			resultatAccio = UDP_EnviaA(sck, ipRem, portRem, resposta, MIDA_RESPOSTA_REGISTRE);
             // TODO : Escriure Log
             // if(resultatResposta < 0){
@@ -173,7 +173,7 @@ int LUMI_processa(int sck, struct DataSet * d){
             // }
 		}
 		else if(missatge[0] == LOCALITZACIO){
-			printf("%s -> %i bytes\n","Petició de localització.", longitud);
+			//printf("%s -> %i bytes\n","Petició de localització.", longitud);
             int resultatLocalitzacio = LUMI_localitza(sck, missatge, longitud, d);
             // TODO : Escriure Log.
 
@@ -820,21 +820,22 @@ int LUMI_ResponLocalitzacio(int socket, int codi, const char * usuariPreguntador
     bzero(direccio, TOTAL_LENGHT_MESSAGE);
 
     strcpy(missatge, "AL");
-    char codiString[1];
+
+    char codiString[2];
     sprintf(codiString, "%d", codi);
     strcat(missatge, codiString);
 
     MontaAdrecaMi(direccio, dnsPreguntador, usuariPreguntador);
 
-    if(codi == ONLINE_LLIURE){
+    if(codi == ONLINE_OCUPAT){
         strcat(missatge, direccio);
     }
-    else if(codi == ONLINE_OCUPAT){
+    else if(codi == ONLINE_LLIURE){
         strcat(missatge, direccio);
-        strcat(missatge, (char*)SEPARADOR);
+        missatge[strlen(missatge)] = SEPARADOR;
         strcat(missatge, ip);
-        strcat(missatge, (char*)SEPARADOR);
-        char portString[5];
+        missatge[strlen(missatge)] = SEPARADOR;
+        char portString[6];
         sprintf(portString, "%d", portTCP);
         strcat(missatge, portString);
     }
@@ -851,7 +852,7 @@ int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns){
 	int  portRem = 0;
 
     int longitud = UDP_RepDe(sck, ipRem, &portRem, missatge, MAX_MESSAGE_LENGHT);
-    printf("##### HA ARRIBAT -> %s\n", missatge);
+    //printf("##### HA ARRIBAT -> %s\n", missatge);
     int resultatAccio = 0;
 
     if(longitud < 0){
@@ -925,6 +926,9 @@ int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns){
             }
         }
         else if(missatge[0] == LOCALITZACIO) { // Missatge de localització, pregunten per mi.
+
+            printf("Pregunten per mi\n");
+
             char jo[MAX_MESSAGE_LENGHT];
             bzero(jo, MAX_MESSAGE_LENGHT);
             // S'emplenen els camps usuari i dns per que es pugui respondre.

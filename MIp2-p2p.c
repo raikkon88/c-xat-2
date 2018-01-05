@@ -160,6 +160,7 @@ int main(int argc,char *argv[])
 
         //socketActiu=MI_HaArribatPetiConv(socketsEscoltant[SCK_TCP]);
         socketActiu = LUMI_HaArribatAlgunaCosa(socketsEscoltant, N_SOCKETS);
+        printf("%s -> %i\n", "CUIDADO!", socketActiu);
         EvalResult(socketActiu, socketsEscoltant, N_SOCKETS);
         if(socketActiu == socketsEscoltant[TECLAT]){
             nInstruccio = readFromKeyboard(instruccio, MAX_BUFFER);
@@ -203,7 +204,6 @@ int main(int argc,char *argv[])
         // Si el socket actiu és el socket udp com que no estem conversant acceptem la conversa.
         else if(socketActiu == socketsEscoltant[SCK_UDP]) {
             int peticio = LUMI_ProcessaClient(socketActiu, missatge, usuariPreguntador, dnsPreguntador);
-            printf("%s\n",missatge);
             if(peticio == LOCALITZACIO_PETICIO){
                 // S'ha de retornar el missatge : AL0preguntador@dnsPreguntador#IP#PORT_TCP
                 resultat = LUMI_ResponLocalitzacio(socketsEscoltant[SCK_UDP], ONLINE_LLIURE, usuariPreguntador, dnsPreguntador, ipTcpLocal, portTCPLocal);
