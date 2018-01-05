@@ -332,6 +332,10 @@ int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
                 }
                 else{
                     // Contesta al servidor anterior
+                    printf("%s\n", "Estic contestant al servidor anterior...");
+                    printf("NICK -> %s\n", nickFrom);
+                    printf("DNS -> %s\n", dnsFrom);
+
                     resultatAccio = LUMI_ContestaServidor(sck, nickFrom, dnsFrom, OFFLINE);
                     if(resultatAccio < 0){
                         LUMI_EscriuLog(d->log, " [ERR-LOC] Error al contestar al servidor -> ", dnsFrom);
@@ -382,11 +386,13 @@ int LUMI_ContestaServidor(int sck, const char * nickFrom, const char * dnsFrom, 
     MontaAdrecaMi(direccio, nickFrom, dnsFrom);
     char resposta[MAX_LINIA];
     LUMI_GeneraRespostaLocalitzacio(codi, direccio, resposta);
+    printf("%s\n", "Ha generat la resposta de localitzacio \n");
     return LUMI_EnviaAMI(sck, dnsFrom, resposta);
 }
 
 int LUMI_ContestaClientMateixDomini(int sck, char * nickFrom, int codiResposta, struct DataSet * d){
     // Cerco la ip del registre que m'ha contactat
+    printf("%s\n", "contestant al client del mateix domini\n");
     struct Registre origen = create(nickFrom);
     existeixRegistre(d, &origen);
     // Miro que no sigui un fake el nick
@@ -785,7 +791,7 @@ int UDP_CreaSock(const char *IPloc, int portUDPloc)
 /* Retorna -1 si hi ha error; el nombre de bytes enviats si tot va bé.    */
 int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes, int LongSeqBytes)
 {
-    printf("S'esta enviant %s\n", SeqBytes);
+    printf("S'esta enviant %s -> %i \n", SeqBytes, sizeof(SeqBytes));
 
 	struct sockaddr_in adrrem;
 	adrrem.sin_family=AF_INET;
