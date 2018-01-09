@@ -230,6 +230,7 @@ int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, 
  * -    Servidor i client
  */
 int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
+    printf("Petició de localització -> %s\n", rebut);
     // S'extreuen els camps del missatge rebut.
     char direccions[MAX_LINIA];
     bzero(direccions, MAX_LINIA);
