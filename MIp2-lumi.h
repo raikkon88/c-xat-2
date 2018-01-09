@@ -66,20 +66,21 @@
 struct Registre {
 
     // Camps que ha de tenir l'struct de registre
-    char username[50]; // Nom d'usuari
-    int  port;         // port UDP associat al nom d'usuari
-    char ip[MAX_IP_LENGTH];       // Ip associada a l'usuari.
-    int  online;       // Estipula si el registre, és a dir l'usuari està online.
+    char username[50];          // Nom d'usuari
+    int  port;                  // port UDP associat al nom d'usuari
+    char ip[MAX_IP_LENGTH];     // Ip associada a l'usuari.
+    int  online;                // Estipula si el registre, és a dir l'usuari està online.
+    int  peticionsAcumulades;   // contador de peticions acumulades que serveix per veure si el client està desconnectat
+
 };
 
 // DECLARACIÓ DE FUNCIONS DE L'STRUCT USUARIS
 struct Registre create(char* _username);
-void ini(struct Registre * r, char* _username, int _port, char* _ip, int _online);
+void ini(struct Registre * r, char* _username, int _port, char* _ip, int _online, int _peticionsAcumulades);
 void show(struct Registre * reg);
 int compare(struct Registre * r1, struct Registre * r2);
 int isOnline(struct Registre * r);
-
-
+int desconnectat(struct Registre * r1, int maximPeticions);
 
 /**
  * Definició de la taula de clients ************************************************************

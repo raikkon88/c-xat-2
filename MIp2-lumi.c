@@ -20,6 +20,7 @@
 #define SEPARADOR                   '#'
 #define CLIENT_LOG_FILE             "xat2-client.log"
 #define SERVER_LOG_FILE             "xat2-server.log"
+#define MAXIM_PETICIONS_ACUMULADES  3
 
 /**
  * Definició de LUMI ************************************************************
@@ -209,7 +210,7 @@ int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, 
 
 	// Genero un registre i el marquem com online amb la informació que s'ha rebut.
 	struct Registre user;
-    ini(&user, username, portRem, ipRem, online);
+    ini(&user, username, portRem, ipRem, online, 0);
 	updateRegistre(d, &user);
 
     // TODO : S'ha canviar el mostrar dataset per el escriure log.
@@ -248,8 +249,19 @@ int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
         // Primer de tot comprovem que el client estigui al nostre domini (validació)
         struct Registre r = create(nickTo); // Genero un registre flag per fer la cerca
         existeixRegistre(d, &r); // Si no existeix r->online és -1
-
         if(r.online != -1){ // Si el client existeix :
+            // Li augmentem en 1 el nombre de peticions acumulades.
+            // Si s'ha preguntat MAXIM_PETICIONS_ACUMULADES cops per ell sense resposta es considera desconnectat
+            if(desconnectat(&r , MAXIM_PETICIONS_ACUMULADES)){
+                r.peticionsAcumulades = 0;
+                r.online = 0;
+            }
+            else{
+                // En cas que estigui desconnectat no té importància ja que quan es registra es reinicialitza el valor de peticionsAcumulades
+                r.peticionsAcumulades++;
+            }
+            updateRegistre(d, &r);
+
             // Mirem si està on line o si no.
             if(r.online == 1){ // Si està onLine (Si està ocupat o no ho gestiona el client)
                 // Li diem al client b que contesti al client a (BRIDGE)
@@ -1140,18 +1152,20 @@ struct Registre create (char* _username){
     r.port = -1;
     strcpy(r.ip, "");
     r.online = 0;
+    r.peticionsAcumulades = 0;
     return r;
 }
 
 /**
  * Implementació del constructor amb paràmetres.
  */
-void ini(struct Registre * r, char* _username, int _port, char* _ip, int _online){
+void ini(struct Registre * r, char* _username, int _port, char* _ip, int _online, int _peticionsAcumulades){
     //struct Registre r;
     strcpy(r->username, _username);
     r->port = _port;
     strcpy(r->ip, _ip);
     r->online = _online;
+    r->peticionsAcumulades = _peticionsAcumulades;
     //return r;
 }
 
@@ -1189,6 +1203,7 @@ void show(struct Registre * reg){
     printf("Port      : %i\n", reg->port);
     printf("IP        : %s\n", reg->ip);
     printf("Connected : %i\n", reg->online);
+    printf("Peticions : %i\n", reg->peticionsAcumulades);
 }
 
 /**
@@ -1198,6 +1213,17 @@ void show(struct Registre * reg){
  */
 int equals(struct Registre * r1, struct Registre * r2){
     return (strcmp(r1->username, r2->username) || (strcmp(r1->ip, r2->ip) && r1->port == r2->port));
+}
+
+/**
+ * Verifica en funció de maximPeticions si un client es pot considerar desconnectat.
+ * Si es pot declara desconnectat retorna 1, altrament retorna 0
+ */
+int desconnectat(struct Registre * r1, int maximPeticions){
+    if(r1->peticionsAcumulades >= maximPeticions){
+        return 1;
+    }
+    return 0;
 }
 
 /************************ FUNCTIONS DATASET *********************************/
@@ -1212,7 +1238,7 @@ void init(struct DataSet * ds){
     int i;
     for(i=0; i < MAX_CLIENTS; i++){
         struct Registre r;
-        ini(&r, "", -1, "", 0);
+        ini(&r, "", -1, "", 0, 0);
         ds->data[i] = r;
     }
 
