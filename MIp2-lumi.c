@@ -421,8 +421,10 @@ int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
  */
 int LUMI_ContestaServidor(int sck, const char * nickFrom, const char * dnsFrom, int codi){
     char direccio[MAX_LINIA];
+    bzero(direccio, MAX_LINIA);
     MontaAdrecaMi(direccio, dnsFrom, nickFrom);
     char resposta[MAX_LINIA];
+    bzero(resposta,MAX_LINIA);
     LUMI_GeneraRespostaLocalitzacio(codi, direccio, resposta);
     printf("[LOCALITZACIO] Ha generat la resposta de localitzacio -> %s\n", resposta);
     return LUMI_EnviaAMI(sck, dnsFrom, resposta);
@@ -461,7 +463,6 @@ int LUMI_ContestaClientMateixDomini(int sck, char * nickFrom, int codiResposta, 
 int LUMI_GeneraRespostaLocalitzacio(int codi, const char* contingut, char * resposta){
     char codiStr[3];
     sprintf(codiStr, "%c%c%c",ACCEPTAT_MISSATGE, LOCALITZACIO, codi);
-    bzero(resposta, TOTAL_LENGHT_MESSAGE);
     strcat(resposta, codiStr);
     strcat(resposta, contingut);
     return 0;
@@ -762,6 +763,9 @@ int LUMI_EnviaAMI(int sck, const char * dns, const char * missatge){
     bzero(ipServ, MAX_IP_LENGTH);
     ResolDNSaIP(dns, ipServ);
 
+    printf("S'envia al DNS : %s\n", dns);
+    printf("El missatge : %s\n", missatge);
+
 	int Byteenviats =  UDP_EnviaA(sck,ipServ,DEFAULT_PORT_SERVER,missatge,strlen(missatge));
 	if(Byteenviats == -1 ){
 		printf(" error de enviar peticio de localitzacio al server \n");
@@ -842,7 +846,7 @@ int UDP_CreaSock(const char *IPloc, int portUDPloc)
 /* Retorna -1 si hi ha error; el nombre de bytes enviats si tot va bé.    */
 int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes, int LongSeqBytes)
 {
-    printf("S'esta enviant %s -> %i \n", SeqBytes, sizeof(SeqBytes));
+    //printf("S'esta enviant %s -> %i \n", SeqBytes, sizeof(SeqBytes));
 
 	struct sockaddr_in adrrem;
 	adrrem.sin_family=AF_INET;
@@ -859,9 +863,7 @@ int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes,
 		close(Sck);
 		return -1;
 	}
-
 	return bescrit;
-
 }
 
 /* Rep a través del socket UDP d’identificador “Sck” una seqüència de     */
