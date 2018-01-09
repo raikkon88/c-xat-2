@@ -7,7 +7,6 @@
 /*                                                                        */
 /**************************************************************************/
 
-
 #include <sys/stat.h>
 #include <netdb.h>
 #include <fcntl.h>
@@ -19,8 +18,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
-//#include "Registre.h"
-//#include "DataSet.h"
+
+/** Definició de constants */
 
 #define MAX_MESSAGE_LENGHT          200
 #define TOTAL_LENGHT_MESSAGE        204
@@ -60,9 +59,8 @@
 #define LOCALITZACIO_PETICIO        19
 
 
-
 /**
- * Struct de registre de la taula que desa els usuaris.
+ * Struct de registre de la taula que desa els usuaris. ************************************************************
  *
  */
 struct Registre {
@@ -74,26 +72,31 @@ struct Registre {
     int  online;       // Estipula si el registre, és a dir l'usuari està online.
 };
 
+// DECLARACIÓ DE FUNCIONS DE L'STRUCT USUARIS
 struct Registre create(char* _username);
 void ini(struct Registre * r, char* _username, int _port, char* _ip, int _online);
 void show(struct Registre * reg);
 int compare(struct Registre * r1, struct Registre * r2);
 int isOnline(struct Registre * r);
 
+
+
 /**
- * Definició de la taula de clients.
+ * Definició de la taula de clients ************************************************************
  */
-#define MAX_CLIENTS         200 /** Màxim de clients permesos */
-#define MAX_LENGHT_DOMINI   200 /** Màxim de caràcters per el domini */
+#define MAX_CLIENTS         200     /** Màxim de clients permesos */
+#define MAX_LENGHT_DOMINI   200     /** Màxim de caràcters per el domini */
 
 struct DataSet {
 
-    struct Registre data[MAX_CLIENTS]; // Taula de clients que es poden connectar amb el servidor.
-    char domini[MAX_LENGHT_DOMINI];
-    int nClients; // Nombre de clients inscrits.
-    int log;
+    struct Registre data[MAX_CLIENTS];  // Taula de clients que es poden connectar amb el servidor.
+    char domini[MAX_LENGHT_DOMINI];     // Nom del domini
+    int nClients;                       // Nombre de clients inscrits.
+    int log;                            // File descriptor que utilitza el dataset per escriure en el fitxer de log.
 
 };
+
+// DECLARACIÓ DE FUNCIONS DE L'STRUCT DATASET
 
 // Inicialitza una taula de clients de màxim MAX_CLIENTS llargada
 void init(struct DataSet *);
@@ -115,12 +118,20 @@ int existeixRegistre(struct DataSet * ds, struct Registre * r);
 void copyRegistre(struct Registre * copy, struct Registre * original);
 // Retorna 1 si està connectat, 0 si està desconnectat
 int isOnline(struct Registre * r);
-
+// Carrega el dataset amb la informació que hi ha al fitxer filename
+// Aquest fitxer ha de tenir el format :
+//  domini
+//  nickname
+//  nickname
+//  ...
 int llegirUsuaris(struct DataSet * ds, char * filename);
-
+// Desa els usuaris en un fitxer anomenat filename (DEPRECATED)
+// Aquest fitxer ha de tenir el format :
+//  domini
+//  nickname
+//  nickname
+//  ...
 int escriureUsuaris(struct DataSet * ds, char * filename);
-
-
 
 /* Declaració de funcions externes de lumi.c, és a dir, d'aquelles que es */
 /* faran servir en un altre fitxer extern, p.e., MIp2-p2p.c,              */
@@ -129,29 +140,31 @@ int escriureUsuaris(struct DataSet * ds, char * filename);
 /* En termes de capes de l'aplicació, aquest conjunt de funcions externes */
 /* formen la interfície de la capa LUMI.                                  */
 /* Les funcions externes les heu de dissenyar vosaltres...                */
-//int LUMI_FuncioExterna(arg1, arg2...);
 
+/** Funcions d'inicialització **/
 int LUMI_inicialitza_servidor(struct DataSet * d, char * filename,  char * ip, int port);
 int LUMI_start(int socket, struct DataSet * d);
+/** Funcions de processament SERVIDOR **/
 int LUMI_processa(int sck, struct DataSet * d);
 int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, int portRem, int online);
 int LUMI_Localitza(int sck, char * rebut, int longitud, struct DataSet * d);
 int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struct DataSet * d);
-int LUMI_GeneraRespostaLocalitzacio(int codi, const char* contingut, char * resposta);
-int LUMI_EnviaAMI(int sck, const char * dns, const char * missatge);
-int LUMI_ContestaClientMateixDomini(int sck, char * nickFrom, int codiResposta, struct DataSet * d);
-int LUMI_ContestaServidor(int sck, const char * nickFrom, const char * dnsFrom, int codi);
-int LUMI_getIpiPortDeSocket(int sck, char * ip, int * port);
-void LUMI_crea_resposta_registre(char * resposta, char tipusResposta, int valorResposta);
-
-int LUMI_HaArribatAlgunaCosa(const int * socketsEscoltant, int nSockets);
+/** Funcions de processament CLIENT **/
 int LUMI_CrearSocketClient(const char *IPloc, int portUDPloc);
 int LUMI_EnviaPeticio(const int * LlistaSck, int socketDeLlista, char * nickFrom, char * dnsFrom, char * nickTo, char * dnsTo, char * ipTCPRem, int * portTCPRem, char tipusPeticio, int timeout, int logDescriptor);
 int LUMI_PeticioRegistre(int Sck, const char *usuari, char * domini, int logDescriptor);
 int LUMI_ResponLocalitzacio(int socket, int codi, const char * usuariPreguntador, const char * dnsPreguntador, char * ip, int portTCP, int logDescriptor);
 int LUMI_PeticioDesregistre(int Sck, const char *usuari, char * domini, int logDescriptor);
 int LUMI_PeticioLocalitzacio(int Sck, const char *nickFrom, const char * dnsFrom, const char * nickTo, const char *dnsTo, int logDescriptor);
-
 int LUMI_ProcessaClient(int sck, char * missatge, char * usuari, char * dns, char * ipTCPRem, int * portTCPrem, int logDescriptor);
+/** Funcions genèriques **/
+int LUMI_EnviaAMI(int sck, const char * dns, const char * missatge);
+int LUMI_getIpiPortDeSocket(int sck, char * ip, int * port);
+int LUMI_HaArribatAlgunaCosa(const int * socketsEscoltant, int nSockets);
+int LUMI_GeneraRespostaLocalitzacio(int codi, const char* contingut, char * resposta);
 int LUMI_GeneraLog(char * NomFitxLog);
 int LUMI_TancaLog(int logDescriptor);
+/** Funcions de resposta **/
+void LUMI_crea_resposta_registre(char * resposta, char tipusResposta, int valorResposta);
+int LUMI_ContestaClientMateixDomini(int sck, char * nickFrom, int codiResposta, struct DataSet * d);
+int LUMI_ContestaServidor(int sck, const char * nickFrom, const char * dnsFrom, int codi);
