@@ -191,6 +191,7 @@ int LUMI_processa(int sck, struct DataSet * d){
 		}
 		else if(missatge[0] == LOCALITZACIO){
             int resultatLocalitzacio = LUMI_localitza(sck, missatge, longitud, d);
+            printf("%s\n", "després del lumi_localitza  codi retornat -> %i", resultatLocalitzacio);
 		}
         else if(missatge[0] == ACCEPTAT_MISSATGE){
             if(missatge[1] == LOCALITZACIO){
@@ -207,6 +208,7 @@ int LUMI_processa(int sck, struct DataSet * d){
             LUMI_EscriuLog(d->log, " [ERR-PRO] S'ha descartat el missatge rebut.", missatge);
         }
 	}
+    return 0;
 }
 
 /**
@@ -363,12 +365,14 @@ int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
                     printf("DNS -> %s\n", dnsFrom);
 
                     resultatAccio = LUMI_ContestaServidor(sck, nickFrom, dnsFrom, OFFLINE);
+                    printf("%s\n", "Després del contesta servidor");
                     if(resultatAccio < 0){
                         LUMI_EscriuLog(d->log, " [ERR-LOC] Error al contestar al servidor -> ", dnsFrom);
                     }
                     else{
                         LUMI_EscriuLog(d->log, " [OK-LOC] Contestat correctament -> ", dnsFrom);
                     }
+                    printf("%s\n", "després descriure log");
                 }
             }
         }
@@ -422,6 +426,7 @@ int LUMI_ContestaServidor(int sck, const char * nickFrom, const char * dnsFrom, 
     LUMI_GeneraRespostaLocalitzacio(codi, direccio, resposta);
     printf("[LOCALITZACIO] Ha generat la resposta de localitzacio -> %s\n", resposta);
     return LUMI_EnviaAMI(sck, dnsFrom, resposta);
+    printf("%s\n", "després del envia mi");
 }
 
 /**
