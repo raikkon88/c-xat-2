@@ -26,7 +26,7 @@
 #define TECLAT 				0
 #define PORT_DEFECTE        0
 #define ALL_IP              "0.0.0.0"
-#define TIMEOUT             3
+#define TIMEOUT             1
 #define LOG_FILE            "xat2-client.log"
 
 /* Defineixo la posició del sockets a la taula de sockets */

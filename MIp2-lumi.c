@@ -467,6 +467,7 @@ int LUMI_EnviaPeticio(const int * LlistaSck, int socketDeLlista, char * nickFrom
     int socket = -2;
     int resultat = 0;
     while(nombreReenviaments < MAX_NOMBRE_RETRANSMISSIONS && socket == -2){
+        LUMI_EscriuLog(logDescriptor, " [TIME] ","Enviament o retransmissió");
         if(tipusPeticio == REGISTRE){
             // Envia la petició de registre
             resultat = LUMI_PeticioRegistre(LlistaSck[socketDeLlista], nickFrom, dnsFrom, logDescriptor);
@@ -1067,6 +1068,8 @@ int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temp
 		}
 	}
 
+    printf(" %i -> TEMPS \n", Temps);
+
 	int selection;
 	if(Temps == -1){
 		if(select(descmax+1, &conjunt, NULL, NULL, NULL)==-1)
@@ -1077,7 +1080,7 @@ int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temp
     else{
         struct timeval timeout;
     	timeout.tv_sec = Temps;
-      	timeout.tv_usec = 0;
+      	timeout.tv_usec = Temps*1000;
         if(select(descmax+1, &conjunt, NULL, NULL, &timeout)==-1)
         {
 		    return (-1);
