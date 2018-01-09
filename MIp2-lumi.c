@@ -215,6 +215,8 @@ int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struc
     // Treiem el codi de resposta i el missatge i ens quedem la direcció
     strncpy(direccio, rebut + 3, longitud);
 
+
+
     char nickTo[MAX_LINIA];
     char dnsTo[MAX_LINIA];
     char resta[MAX_LINIA];
@@ -239,8 +241,12 @@ int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struc
         struct Registre desti = create(nickTo);
         existeixRegistre(d, &desti);
         if(desti.online != -1) { // El registre existeix
+            // Es copia el missatge a un altre string per prevenir accessos fóra de memòria.
+            char retransmissio[longitud];
+            strcpy(retransmissio, rebut);
+            // Es retransmet. 
             LUMI_EscriuLog(d->log, " [W-LOC] S'actua de pont del missatge -> ", rebut);
-            resultatAccio = UDP_EnviaA(sck, desti.ip, desti.port, rebut, longitud);
+            resultatAccio = UDP_EnviaA(sck, desti.ip, desti.port, retransmissio, longitud);
             if(resultatAccio < 0){
                 LUMI_EscriuLog(d->log, " [ERR-LOC] ", "Error al actuar de pont.");
             }
