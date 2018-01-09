@@ -1078,7 +1078,7 @@ int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temp
         struct timeval timeout;
     	timeout.tv_sec = Temps;
       	timeout.tv_usec = 0;
-        if(select(descmax+1, &conjunt, NULL, NULL, NULL)==-1)
+        if(select(descmax+1, &conjunt, NULL, NULL, &timeout)==-1)
         {
 		    return (-1);
         }
