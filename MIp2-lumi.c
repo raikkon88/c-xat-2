@@ -106,6 +106,7 @@ void LUMI_crea_resposta_registre(char * resposta, char tipusResposta, int valorR
 int LUMI_start(int socket, struct DataSet * d){
 
 	while(1){
+        printf("Inici del while\n");
 		fd_set conjunt;
 		FD_ZERO(&conjunt);
 		FD_SET(socket,&conjunt);
@@ -120,15 +121,18 @@ int LUMI_start(int socket, struct DataSet * d){
 
 		if(FD_ISSET(socket, &conjunt)){
 			// Ha arribat quelcom per udp
+            printf("Abans del LUMI_Processa\n");
 			int res = LUMI_processa(socket, d);
+            printf("Després del LUMI_Processa\n");
 			if(res < 0){
-				return -1;
+				break;
 			}
 		}
 		else{
 			// Ha arribat de teclat
 			break;
 		}
+        printf("Fi del while\n");
 	}
     UDP_TancaSock(socket);
 	return 0;
@@ -143,6 +147,7 @@ int LUMI_start(int socket, struct DataSet * d){
  * SUCCESS -> return 0
  */
 int LUMI_processa(int sck, struct DataSet * d){
+    printf("%s\n","Dins del processa" );
 	char ipRem[MAX_IP_LENGTH] = "";
 	int  portRem = 0;
 	char missatge[MAX_MESSAGE_LENGHT];
@@ -190,7 +195,9 @@ int LUMI_processa(int sck, struct DataSet * d){
         else if(missatge[0] == ACCEPTAT_MISSATGE){
             if(missatge[1] == LOCALITZACIO){
                 // En aquest cas ens està arrivant o bé una resposta d'un client o una resposta d'un servidor.
+                printf("%s\n","Abans de Processa Resposta Localització" );
                 int resultatResposta = LUMI_ProcessaRespostaLocalitzacio(sck, missatge, longitud, d);
+                printf("%s\n","Després de Processa Resposta Localització" );
             }
             else{
                 LUMI_EscriuLog(d->log, " [ERR-PRO] S'ha descartat el missatge rebut.", missatge);
@@ -254,15 +261,19 @@ int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struc
         }
     }
     else { // El missatge s'ha de reenviar a un altre servidor.
+        printf("%s\n", "Abans del escriu log abans de reenviar el missatge a un altre servidor");
         // TODO S'ha de canviar el nickTo i treure'l, ha d'anar inclós a dins del missatge.
         LUMI_EscriuLog(d->log, " [W-LOC] Es reenvia el missatge -> ", rebut);
+        printf("%s\n", "Abans del envia a mi");
         resultatAccio = LUMI_EnviaAMI(sck, dnsTo, rebut);
+        printf("%s\n", "Després del envia a mi");
         if(resultatAccio < 0){
             LUMI_EscriuLog(d->log, " [ERR-LOC] Error al reenviar missatge al servidor -> ", dnsTo);
         }
         else {
             LUMI_EscriuLog(d->log, " [OK-LOC] Missatge reenviat correctament al servidor -> ", dnsTo);
         }
+        printf("%s\n", "Un cop enviat el missatge a un altre servidor i el log escrit");
     }
 }
 
