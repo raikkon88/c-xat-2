@@ -15,6 +15,6 @@
 # 	./compile
 # El primer cop demanarà el password i després ja no caldrà tornar-lo a posar. 
 
-git pull
+#git pull
 gcc -o client MIp2-p2p.c MIp2-lumi.c MIp2-mi.c
 gcc -o server MIp2-nodelumi.c MIp2-lumi.c

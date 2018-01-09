@@ -202,6 +202,12 @@ int LUMI_processa(int sck, struct DataSet * d){
 	}
 }
 
+/**
+ * Processa totes les respostes de localització que li arriben :
+ *  - De Clients
+ *  - De servidors
+ * Amb un format 'AL...'. Actúa de pont entre els missatges.
+ */
 int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struct DataSet * d){
 
     char direccio[MAX_LINIA];
@@ -285,6 +291,14 @@ int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, 
     return 0;
 }
 
+/**
+ * S'encarrega de gestionar totes les peticions de localizació que reb el SERVIDOR
+ * En cas que sigui necessari genera respostes de localització (crides a funcions)
+ * En cas que sigui necessari reenvia les peticions actuant de pont entre :
+ * -    Dos clients
+ * -    Servidors
+ * -    Servidor i client
+ */
 int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
     // S'extreuen els camps del missatge rebut.
     char direccions[MAX_LINIA];
@@ -381,25 +395,40 @@ int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
     }
 }
 
+/**
+ * Es genera la resposta de localització que va dirigida a un altre servidor i no a un client.
+ * S'utilitza per contestar als clients que no son del domini que s'ha carregat
+ * i com a resposta a una petició d'un altre SERVIDOR que pregunta per un client
+ * del nostre domini.
+ * monta la resposta 'ALcodinickFrom@dnsFrom' i s'envia a dnsFrom.
+ * Es diuen nickFrom i dnsFrom per que fan referència a qui ha fet la petició.
+ */
 int LUMI_ContestaServidor(int sck, const char * nickFrom, const char * dnsFrom, int codi){
     char direccio[MAX_LINIA];
     MontaAdrecaMi(direccio, dnsFrom, nickFrom);
     char resposta[MAX_LINIA];
     LUMI_GeneraRespostaLocalitzacio(codi, direccio, resposta);
-    printf("Ha generat la resposta de localitzacio -> %s\n", resposta);
+    printf("[LOCALITZACIO] Ha generat la resposta de localitzacio -> %s\n", resposta);
     return LUMI_EnviaAMI(sck, dnsFrom, resposta);
 }
 
+/**
+ * S'executa quan un client pregunta per un altre client del mateix domini i el
+ * servidor actual sap que no està connectat.
+ * Monta la resposta 'ALcodiRespostanickFrom@dnsFrom'
+ */
 int LUMI_ContestaClientMateixDomini(int sck, char * nickFrom, int codiResposta, struct DataSet * d){
     // Cerco la ip del registre que m'ha contactat
     printf("%s\n", "contestant al client del mateix domini\n");
     struct Registre origen = create(nickFrom);
     existeixRegistre(d, &origen);
-    // Miro que no sigui un fake el nick
+    // Miro que no sigui un fake el nick que pregunta i "autoritzo" enviar-li la resposta
     if(origen.online != -1){
-        // Contestem al client a que no es pot realitzar la connexió (AL3)
+        // Contestem al client a que no es pot realitzar la connexió
         char resposta[TOTAL_LENGHT_MESSAGE];
-        LUMI_GeneraRespostaLocalitzacio(codiResposta, "", resposta);
+        char adrecaMI[MAX_MESSAGE_LENGHT];
+        MontaAdrecaMi(adrecaMI, nickFrom, d->domini);
+        LUMI_GeneraRespostaLocalitzacio(codiResposta, adrecaMI, resposta);
         LUMI_EscriuLog(d->log, " [W-LOC] Contestant a un client del mateix domini -> ", resposta);
         return UDP_EnviaA(sck, origen.ip, origen.port, resposta, strlen(resposta));
     }
@@ -408,7 +437,11 @@ int LUMI_ContestaClientMateixDomini(int sck, char * nickFrom, int codiResposta, 
     }
 }
 
-int LUMI_GeneraRespostaLocalitzacio(int codi, char* contingut, char * resposta){
+/**
+ * resposta conté el missatge de resposta muntat
+ * El format del missatge és : 'ALcodicontingut'
+ */
+int LUMI_GeneraRespostaLocalitzacio(int codi, const char* contingut, char * resposta){
     char codiStr[3];
     sprintf(codiStr, "%c%c%c",ACCEPTAT_MISSATGE, LOCALITZACIO, codi);
     bzero(resposta, TOTAL_LENGHT_MESSAGE);

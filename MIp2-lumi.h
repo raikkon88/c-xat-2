@@ -137,7 +137,7 @@ int LUMI_processa(int sck, struct DataSet * d);
 int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, int portRem, int online);
 int LUMI_Localitza(int sck, char * rebut, int longitud, struct DataSet * d);
 int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struct DataSet * d);
-int LUMI_GeneraRespostaLocalitzacio(int codi, char* contingut, char * resposta);
+int LUMI_GeneraRespostaLocalitzacio(int codi, const char* contingut, char * resposta);
 int LUMI_EnviaAMI(int sck, const char * dns, const char * missatge);
 int LUMI_ContestaClientMateixDomini(int sck, char * nickFrom, int codiResposta, struct DataSet * d);
 int LUMI_ContestaServidor(int sck, const char * nickFrom, const char * dnsFrom, int codi);
