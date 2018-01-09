@@ -892,7 +892,7 @@ int UDP_RepDe(int Sck, char *IPrem, int *portUDPrem, char *SeqBytes, int LongSeq
 	}
     bzero(IPrem, MAX_IP_LENGTH);
 	strcpy(IPrem,inet_ntoa(adrrem.sin_addr));
-	*portUDPrem=ntohs(adrrem.sin_port);
+    *portUDPrem = (int)(intptr_t)ntohs(adrrem.sin_port);
 
     printf("S'ha rebut de %s,%i -> %s que porten %i caracters i shan llegit %i\n", IPrem, (int)(int*)portUDPrem, SeqBytes, strlen(SeqBytes), bllegit);
 
