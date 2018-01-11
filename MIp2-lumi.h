@@ -76,6 +76,7 @@ struct Registre {
 
 // DECLARACIÓ DE FUNCIONS DE L'STRUCT USUARIS
 struct Registre create(char* _username);
+struct Registre createPerIp(char * _ip, int port);
 void ini(struct Registre * r, char* _username, int _port, char* _ip, int _online, int _peticionsAcumulades);
 void show(struct Registre * reg);
 int compare(struct Registre * r1, struct Registre * r2);

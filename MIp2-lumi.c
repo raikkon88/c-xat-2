@@ -350,22 +350,27 @@ int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struc
     char nickTo[MAX_LINIA];
     char dnsTo[MAX_LINIA];
     char resta[MAX_LINIA];
+    char ipTCP[MAX_IP_LENGTH];
+    int portTCP;
 
     bzero(nickTo, MAX_LINIA);
     bzero(dnsTo, MAX_LINIA);
     bzero(resta, MAX_LINIA);
+    bzero(ipTCP, MAX_IP_LENGTH);
+    portTCP = 0;
 
     // Extraiem els camps de les direccions
     if(rebut[2] == ONLINE_LLIURE){
-        sscanf(direccio, "%[^'@']@%[^'#']#%s",nickTo, dnsTo, resta);
+        sscanf(direccio, "%[^'@']@%[^'#']#%[^'#']#%i",nickTo, dnsTo, ipTCP, &portTCP);
     }
     else{
         sscanf(direccio, "%[^'@']@%s",nickTo, dnsTo);
     }
-
+    // Cerco el registre i el copio a desti, (s'haurà de fer tant si va dirigit a mi com si no..)
     int resultatAccio = 0;
     if(strcmp(dnsTo, d->domini) == 0){ // El missatge va dirigit a mi
-        struct Registre desti = create(nickTo);
+        struct Registre desti;
+        desti = create(nickTo);
         existeixRegistre(d, &desti);
         if(desti.online != -1) { // El registre existeix
             // Es retransmet.
@@ -383,6 +388,16 @@ int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struc
         }
     }
     else { // El missatge s'ha de reenviar a un altre servidor.
+        // recopero elmeu client per restar el nombre de peticions
+        struct Registre origen;
+        origen = createPerIp(ipTCP, portTCP);
+        existeixRegistre(d, &origen);
+        if(origen.online != -1){
+            // Significa que haig de decrementar el nombre de peticions que té
+            origen.peticionsAcumulades--;
+            updateRegistre(d, &origen);
+        }
+
         LUMI_EscriuLog(d->log, " [W-LOC] Es reenvia el missatge -> ", rebut);
         resultatAccio = LUMI_EnviaAMI(sck, dnsTo, rebut);
         if(resultatAccio < 0){
@@ -1158,6 +1173,15 @@ struct Registre create (char* _username){
     r.online = 0;
     r.peticionsAcumulades = 0;
     return r;
+}
+
+struct Registre createPerIp(char * _ip, int port){
+    struct Registre r;
+    strcpy(r.ip, _ip);
+    r.port = port;
+    strcpy(r.username, "");
+    r.online = 0;
+    r.peticionsAcumulades = 0;
 }
 
 /**
