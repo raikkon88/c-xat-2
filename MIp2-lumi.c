@@ -368,8 +368,6 @@ int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struc
     // Extraiem els camps de les direccions
     if(rebut[2] == ONLINE_LLIURE){
         sscanf(direccio, "%[^'@']@%[^'#']#%[^'#']#%i",nickTo, dnsTo, ipTCP, &portTCP);
-        printf("IP ORIGEN : %s\n", ipTCP);
-        printf("PORT ORIGEN : %i\n", portTCP);
     }
     else{
         sscanf(direccio, "%[^'@']@%s",nickTo, dnsTo);
@@ -838,7 +836,7 @@ int LUMI_EnviaAMI(int sck, const char * dns, const char * missatge){
     ResolDNSaIP(dns, ipServ);
 
 	int Byteenviats =  UDP_EnviaA(sck,ipServ,DEFAULT_PORT_SERVER,missatge,strlen(missatge));
-	if(Byteenviats == -1 ){
+	if(Byteenviats < 0){
 		return -1;
 	}
     return 0;
@@ -1094,23 +1092,19 @@ int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temp
 	}
 
     //printf(" %i -> TEMPS \n", Temps);
+    struct timeval *timeout = NULL;
+    if(Temps != -1){
+        timeout = (struct timeval *)malloc(sizeof(struct timeval));
+        timeout->tv_sec = Temps;
+        timeout->tv_usec = Temps*1000;
+    }
 
-	int selection;
-	if(Temps == -1){
-		if(select(descmax+1, &conjunt, NULL, NULL, NULL)==-1)
-        {
-		    return (-1);
-        }
-	}
-    else{
-        struct timeval timeout;
-    	timeout.tv_sec = Temps;
-      	timeout.tv_usec = Temps*1000;
-        if(select(descmax+1, &conjunt, NULL, NULL, &timeout)==-1)
-        {
-		    return (-1);
-        }
-	}
+    if(select(descmax+1, &conjunt, NULL, NULL, timeout)==-1)
+    {
+        return (-1);
+    }
+    free(timeout);
+
 	for(i = 0;i < LongLlistaSck; i++){
 		if (FD_ISSET(LlistaSck[i], &conjunt)) return LlistaSck[i];
 	}
