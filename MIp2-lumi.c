@@ -259,9 +259,15 @@ int LUMI_localitza(int sck, char * rebut, int longitud, struct DataSet * d){
             }
             else{
                 // En cas que estigui desconnectat no té importància ja que quan es registra es reinicialitza el valor de peticionsAcumulades
-                r.peticionsAcumulades++;
+                if(r.online == 1){
+                    r.peticionsAcumulades++;
+                }
             }
+
+            show(&r);
             updateRegistre(d, &r);
+            existeixRegistre(d, &r); // Si no existeix r->online és -1
+            show(&r);
 
             // Mirem si està on line o si no.
             if(r.online == 1){ // Si està onLine (Si està ocupat o no ho gestiona el client)
@@ -362,10 +368,13 @@ int LUMI_ProcessaRespostaLocalitzacio(int sck, char * rebut, int longitud, struc
     // Extraiem els camps de les direccions
     if(rebut[2] == ONLINE_LLIURE){
         sscanf(direccio, "%[^'@']@%[^'#']#%[^'#']#%i",nickTo, dnsTo, ipTCP, &portTCP);
+        printf("IP ORIGEN : %s\n", ipTCP);
+        printf("PORT ORIGEN : %i\n", portTCP);
     }
     else{
         sscanf(direccio, "%[^'@']@%s",nickTo, dnsTo);
     }
+
     // Cerco el registre i el copio a desti, (s'haurà de fer tant si va dirigit a mi com si no..)
     int resultatAccio = 0;
     if(strcmp(dnsTo, d->domini) == 0){ // El missatge va dirigit a mi
@@ -1084,7 +1093,7 @@ int HaArribatAlgunaCosaEnTemps(const int *LlistaSck, int LongLlistaSck, int Temp
 		}
 	}
 
-    printf(" %i -> TEMPS \n", Temps);
+    //printf(" %i -> TEMPS \n", Temps);
 
 	int selection;
 	if(Temps == -1){
@@ -1202,6 +1211,7 @@ void copyRegistre(struct Registre * copy, struct Registre * original){
     copy->port = original->port;
     strcpy(copy->ip, original->ip);
     copy->online = original->online;
+    copy->peticionsAcumulades = original->peticionsAcumulades;
 }
 
 /**
