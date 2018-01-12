@@ -10,6 +10,9 @@
 
 #include "MIp2-lumi.h"
 
+/******** log *******/
+int fitxer;
+/******** log *******/
 /* Inclusió de llibreries, p.e. #include <sys/types.h> o #include "meu.h" */
 /*  (si les funcions externes es cridessin entre elles, faria falta fer   */
 /*   un #include "MIp2-lumi.h")                                           */
@@ -78,6 +81,20 @@ int LUMI_inicialitza_servidor(struct DataSet * d, char * filename, char * ip, in
 	int lectura = llegirUsuaris(d, filename);
 	if(lectura < 0)
 		return -1;
+		
+	/************* log *********/
+	char nomFitxer[100];
+	strcpy(nomFitxer,"MIp2-nodelumi-");
+	strcat(nomFitxer,d->domini);
+	strcat(nomFitxer,".log");
+	
+	fitxer = Log_CreaFitx(nomFitxer);
+	if(fitxer == -1){
+		perror("error creant fitxer log");
+		return -1;
+	}
+	
+	/************* log *********/
 
     LUMI_EscriuLog(d->log, " [OK-INI] ", "S'han inicialitzat els usuaris");
 
@@ -120,9 +137,13 @@ int LUMI_start(int socket, struct DataSet * d){
 		}
 		else{
 			// Ha arribat de teclat
-			break;
+			//break;
+			return 0;
 		}
 	}
+	
+	
+	
     UDP_TancaSock(socket);
 	return 0;
 }
@@ -552,6 +573,21 @@ int LUMI_PeticioRegistre(int Sck, const char *usuari, char * domini, int logDesc
     bzero(SeqBytes, TOTAL_LENGHT_MESSAGE);
 	strcpy(SeqBytes, "R");
 	strcat(SeqBytes, usuari);
+	
+	/************************** log *******/
+	char nomFitxer[100];
+	strcpy(nomFitxer,"MIp2-p2p-");
+	strcat(nomFitxer,usuari);
+	strcat(nomFitxer,"@");
+	strcat(nomFitxer,domini);
+	strcat(nomFitxer,".log");
+	
+	fitxer = Log_CreaFitx(nomFitxer);
+	if(fitxer == -1){
+		perror("error creant fitxer log");
+		return -1;
+	}
+	/**************** log *************/
 
     LUMI_EscriuLog(logDescriptor, " [OK-REG] Enviada petició de registre ", SeqBytes);
 
@@ -954,6 +990,24 @@ int UDP_EnviaA(int Sck, const char *IPrem, int portUDPrem, const char *SeqBytes,
 		close(Sck);
 		return -1;
 	}
+	
+	/************ log **************/
+	char missatgeLog[250];
+	char port[6];
+	sprintf(port, "%d", portUDPrem); 
+	char mida[4];
+	sprintf(mida, "%d", LongSeqBytes); 
+	strcpy(missatgeLog,"E: ");
+	strcat(missatgeLog,IPrem);
+	strcat(missatgeLog,":UDP:");
+	strcat(missatgeLog,port);
+	strcat(missatgeLog,", ");
+	strcat(missatgeLog,SeqBytes);
+	strcat(missatgeLog,", ");
+	strcat(missatgeLog,mida);
+	strcat(missatgeLog,".\n");
+	Log_Escriu(fitxer,missatgeLog);
+	/*************** log **************/
 	return bescrit;
 }
 
@@ -983,6 +1037,24 @@ int UDP_RepDe(int Sck, char *IPrem, int *portUDPrem, char *SeqBytes, int LongSeq
     bzero(IPrem, MAX_IP_LENGTH);
 	strcpy(IPrem,inet_ntoa(adrrem.sin_addr));
     *portUDPrem = (int)(intptr_t)ntohs(adrrem.sin_port);
+    
+    /********** log **********/
+    char missatgeLog[250];
+	char port[6];
+	sprintf(port, "%d", *portUDPrem); 
+	char mida[4];
+	sprintf(mida, "%d", bllegit); 
+	strcpy(missatgeLog,"R: ");
+	strcat(missatgeLog,IPrem);
+	strcat(missatgeLog,":UDP:");
+	strcat(missatgeLog,port);
+	strcat(missatgeLog,", ");
+	strcat(missatgeLog,SeqBytes);
+	strcat(missatgeLog,", ");
+	strcat(missatgeLog,mida);
+	strcat(missatgeLog,".\n");
+	Log_Escriu(fitxer,missatgeLog);
+    /************ Log *********/
 
 	return bllegit; // Se li resta el '\0'
 }
