@@ -209,16 +209,22 @@ int LUMI_registre(char * rebut, int longitud, struct DataSet * d, char * ipRem, 
 	username[longitud]='\0';
 
 	// Genero un registre i el marquem com online amb la informació que s'ha rebut.
-	struct Registre user;
-    ini(&user, username, portRem, ipRem, online, 0);
-	updateRegistre(d, &user);
+	struct Registre centinella = create(username);
 
-    // TODO : S'ha canviar el mostrar dataset per el escriure log.
-    showDataSet(d);
+    existeixRegistre(d, &centinella);
 
-    LUMI_EscriuLog(d->log, " [OK-DATA] S'ha actualitzat el registre -> ", user.username);
-
-    return 0;
+    if(centinella.online == -1){
+        // El registre no existeix
+        return -1;
+    }
+    else{
+        struct Registre user;
+        ini(&user, username, portRem, ipRem, online, 0);
+        updateRegistre(d, &user);
+        showDataSet(d);
+        LUMI_EscriuLog(d->log, " [OK-DATA] S'ha actualitzat el registre -> ", user.username);
+        return 0;
+    }
 }
 
 /**
