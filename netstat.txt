@@ -1,0 +1,66 @@
+Kernel Interface table
+Iface   MTU Met   RX-OK RX-ERR RX-DRP RX-OVR    TX-OK TX-ERR TX-DRP TX-OVR Flg
+eth0       1500 0       163      0      0 0           122      0      0      0 BMRU
+eth1       1500 0        98      0      0 0            18      0      0      0 BMRU
+lo        16436 0   1186910      0      0 0       1186910      0      0      0 LRU
+*********************************
+taula de rutes :
+*********************************
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+default         192.168.15.1    0.0.0.0         UG        0 0          0 eth0
+192.168.15.0    *               255.255.255.0   U         0 0          0 eth0
+192.168.56.0    *               255.255.255.0   U         0 0          0 eth1
+*********************************
+Llistat de ports i sockets connectats amb pid del programa : 
+*********************************
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 *:46760                 *:*                     LISTEN      3191/client     
+tcp        0      0 *:ssh                   *:*                     LISTEN      -               
+tcp        0      0 *:41278                 *:*                     LISTEN      3191/client     
+tcp6       0      0 [::]:ssh                [::]:*                  LISTEN      -               
+udp        0      0 *:57272                 *:*                                 3191/client     
+udp        0      0 *:8765                  *:*                                 3197/server     
+udp        0      0 *:bootpc                *:*                                 -               
+udp        0      0 *:bootpc                *:*                                 -               
+Active UNIX domain sockets (only servers)
+Proto RefCnt Flags       Type       State         I-Node   PID/Program name    Path
+unix  2      [ ACC ]     STREAM     LISTENING     8216     -                   /var/run/acpid.socket
+unix  2      [ ACC ]     STREAM     LISTENING     11020    1641/xfce4-session  @/tmp/.ICE-unix/1641
+unix  2      [ ACC ]     STREAM     LISTENING     8766     -                   @/tmp/.X11-unix/X0
+unix  2      [ ACC ]     STREAM     LISTENING     8767     -                   /tmp/.X11-unix/X0
+unix  2      [ ACC ]     STREAM     LISTENING     7987     -                   /var/run/dbus/system_bus_socket
+unix  2      [ ACC ]     STREAM     LISTENING     6833     -                   @/com/ubuntu/upstart
+unix  2      [ ACC ]     SEQPACKET  LISTENING     7032     -                   /run/udev/control
+unix  2      [ ACC ]     STREAM     LISTENING     11021    1641/xfce4-session  /tmp/.ICE-unix/1641
+unix  2      [ ACC ]     STREAM     LISTENING     10943    -                   /tmp/ssh-OraJjgtk1552/agent.1552
+unix  2      [ ACC ]     STREAM     LISTENING     9255     -                   @/tmp/gdm-session-PhTbfDfy
+unix  2      [ ACC ]     STREAM     LISTENING     10957    1625/dbus-daemon    @/tmp/dbus-9zsCKXToir
+unix  2      [ ACC ]     STREAM     LISTENING     8871     -                   @/tmp/gdm-greeter-oCblGGGo
+*********************************
+Llistat de ports i sockets connectats amb pid del programa, sense realitzar connexió TCP : 
+*********************************
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 *:ssh                   *:*                     LISTEN      -               
+tcp        0      0 *:33592                 *:*                     LISTEN      3544/client     
+tcp6       0      0 [::]:ssh                [::]:*                  LISTEN      -               
+udp        0      0 *:37306                 *:*                                 3544/client     
+udp        0      0 *:8765                  *:*                                 3197/server     
+udp        0      0 *:bootpc                *:*                                 -               
+udp        0      0 *:bootpc                *:*                                 -               
+Active UNIX domain sockets (only servers)
+Proto RefCnt Flags       Type       State         I-Node   PID/Program name    Path
+unix  2      [ ACC ]     STREAM     LISTENING     8216     -                   /var/run/acpid.socket
+unix  2      [ ACC ]     STREAM     LISTENING     11020    1641/xfce4-session  @/tmp/.ICE-unix/1641
+unix  2      [ ACC ]     STREAM     LISTENING     8766     -                   @/tmp/.X11-unix/X0
+unix  2      [ ACC ]     STREAM     LISTENING     8767     -                   /tmp/.X11-unix/X0
+unix  2      [ ACC ]     STREAM     LISTENING     7987     -                   /var/run/dbus/system_bus_socket
+unix  2      [ ACC ]     STREAM     LISTENING     6833     -                   @/com/ubuntu/upstart
+unix  2      [ ACC ]     SEQPACKET  LISTENING     7032     -                   /run/udev/control
+unix  2      [ ACC ]     STREAM     LISTENING     11021    1641/xfce4-session  /tmp/.ICE-unix/1641
+unix  2      [ ACC ]     STREAM     LISTENING     10943    -                   /tmp/ssh-OraJjgtk1552/agent.1552
+unix  2      [ ACC ]     STREAM     LISTENING     9255     -                   @/tmp/gdm-session-PhTbfDfy
+unix  2      [ ACC ]     STREAM     LISTENING     10957    1625/dbus-daemon    @/tmp/dbus-9zsCKXToir
+unix  2      [ ACC ]     STREAM     LISTENING     8871     -                   @/tmp/gdm-greeter-oCblGGGo
